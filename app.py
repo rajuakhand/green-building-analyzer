@@ -101,4 +101,8 @@ elif option == "AI Recommendations":
                     st.success("AI Insights Generated Successfully:")
                     st.write(response.text)
             except Exception as e:
+<<<<<<< HEAD
                 st.error(f"Error generating AI response: {e}")
+=======
+                st.error(f"Error generating AI response: {e}")
+>>>>>>> 484d3be487c0fd6b4acb7e63a9c6ae66f75ebbdd
