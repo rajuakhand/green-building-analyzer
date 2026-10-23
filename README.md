@@ -24,7 +24,21 @@ Ekti advanced, research-grade AI-powered web application jeta green building mat
 - **Google Gemini API** (AI Insights)
 
 ---
+## 📖 Citation
 
+Apni jodi ei software-ti academic research ba project-e use koren, tahole kindly niche dewa format-e cite korun:
+
+```bibtex
+@software{Akhand_Green_Building_Analyzer_2026,
+  author = {Akhand, Abdul Gaffar Raju},
+  title = {{Green Building Analyzer: AI-Powered Smart Green Building and Material Footprint Analyzer}},
+  month = oct,
+  year = 2026,
+  publisher = {Zenodo},
+  version = {v1.0.0},
+  doi = {10.5281/zenodo.23604851},
+  url = {[https://doi.org/10.5281/zenodo.23604851](https://doi.org/10.5281/zenodo.23604851)}
+}
 ## 📦 Installation & Setup
 
 Project-ti local machine-e run korar jonno niche instructions follow korun:
