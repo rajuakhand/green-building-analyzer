@@ -11,17 +11,19 @@ st.set_page_config(
     page_icon="🏢",
     layout="wide"
 )
-
-# API Key Configuration
+# API Key Configuration (Safely handles local run without secrets.toml)
 api_key = None
-if "GEMINI_API_KEY" in st.secrets:
-    api_key = st.secrets["GEMINI_API_KEY"]
-else:
+try:
+    if "GEMINI_API_KEY" in st.secrets:
+        api_key = st.secrets["GEMINI_API_KEY"]
+except Exception:
+    pass
+
+if not api_key:
     api_key = os.getenv("GEMINI_API_KEY")
 
 if api_key:
     genai.configure(api_key=api_key)
-
 # App Header
 st.title("🌱 Green Building Analyzer")
 st.markdown("**AI-Powered Smart Green Building and Material Footprint Analyzer**")
