@@ -4,3 +4,4 @@ plotly
 python-dotenv
 langchain
 langchain-google-genai
+fpdf2
