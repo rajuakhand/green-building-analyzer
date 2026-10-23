@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Akhand
+    given-names: Abdul Gaffar Raju
+title: "Green Building Analyzer: AI-Powered Smart Green Building and Material Footprint Analyzer"
+version: 1.0.0
+date-released: 2026-10-24
+url: "https://github.com/rajuakhand/green-building-analyzer"
