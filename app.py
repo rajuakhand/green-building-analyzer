@@ -11,7 +11,8 @@ st.set_page_config(
     page_icon="🏢",
     layout="wide"
 )
-# API Key Configuration (Safely handles local run without secrets.toml)
+
+# API Key Configuration (Safe for both Local & Streamlit Cloud)
 api_key = None
 try:
     if "GEMINI_API_KEY" in st.secrets:
