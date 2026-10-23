@@ -34,15 +34,29 @@ st.markdown(
     }
 
     div[data-testid="stMetric"] {
-        background-color: rgba(128, 128, 128, 0.08);
-        border: 1px solid rgba(128, 128, 128, 0.20);
-        padding: 16px;
-        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(46, 125, 50, 0.06) 0%, rgba(46, 125, 50, 0.01) 100%);
+        border: 1px solid rgba(46, 125, 50, 0.25);
+        padding: 20px;
+        border-radius: 14px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s ease;
+    }
+    
+    div[data-testid="stMetric"]:hover {
+        border-color: rgba(46, 125, 50, 0.5);
+        box-shadow: 0 6px 12px -2px rgba(46, 125, 50, 0.1);
     }
 
     .hero-caption {
-        font-size: 1rem;
-        opacity: 0.8;
+        font-size: 1.1rem;
+        color: #2e7d32;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+
+    .stButton>button {
+        border-radius: 8px;
+        font-weight: 600;
     }
     </style>
     """,
