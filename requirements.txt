@@ -1,17 +1,6 @@
-<<<<<<< HEAD
-
 streamlit
 pandas
 plotly
 python-dotenv
 langchain
 langchain-google-genai
-=======
-
-streamlit
-pandas
-plotly
-python-dotenv
-langchain
-langchain-google-genai
->>>>>>> 5bc653524ae844984c6fea6f87d85020a6b28b64

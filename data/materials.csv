@@ -1,6 +1,5 @@
-
 material,unit,emission_factor,unit_cost,currency,source
-Cement,kg,0.90,1.00,INR,Illustrative demo value
-Sand,kg,0.01,1.00,INR,Illustrative demo value
-Aggregate,kg,0.005,1.00,INR,Illustrative demo value
-Concrete,kg,0.13,1.00,INR,Illustrative demo value
+Portland Pozzolana Cement (PPC),kg,0.76,1.0,INR,"CPWD, Reducing Carbon Footprint in Buildings (2024); https://cpwd.gov.in/Publication/Reducing_Carbon_Footprint_in_Buildings_2024.pdf"
+Sand,kg,0.009,1.0,INR,"CPWD, Reducing Carbon Footprint in Buildings (2024); https://cpwd.gov.in/Publication/Reducing_Carbon_Footprint_in_Buildings_2024.pdf"
+Aggregate,kg,0.009,1.0,INR,"CPWD, Reducing Carbon Footprint in Buildings (2024); https://cpwd.gov.in/Publication/Reducing_Carbon_Footprint_in_Buildings_2024.pdf"
+Concrete,kg,0.13,1.0,INR,Illustrative demo value - not verified

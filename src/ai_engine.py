@@ -1,4 +1,5 @@
 
+
 import os
 
 import pandas as pd
@@ -12,7 +13,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 load_dotenv()
 
-MODEL_NAME = "gemini-3.8-flash"
+MODEL_NAME = "gemini-3.5-flash-lite"
 
 REQUIRED_COLUMNS = [
     "material",
@@ -102,59 +103,30 @@ def get_ai_recommendations(
             model=MODEL_NAME,
             google_api_key=api_key,
             temperature=0.2,
-            max_retries=2,
+            max_retries=0,
+            timeout=30,
         )
 
         # Build the recommendation prompt
         prompt = f"""
-You are a professional sustainable construction advisor.
+You are a practical sustainable-building advisor. Use the supplied data only.
 
-Analyze the following construction material footprint data.
-
-MATERIAL DATA:
+Materials:
 {material_summary}
 
-TOTAL ESTIMATED CARBON: {total_carbon_kg:.2f} kg CO2e
-TOTAL ESTIMATED COST: INR {total_cost:.2f}
+Total estimated carbon: {total_carbon_kg:.2f} kg CO2e
+Total estimated material cost: INR {total_cost:.2f}
 
-Write a professional report in clear English using Markdown.
+Write a concise Markdown report with:
+1. Executive summary.
+2. Main carbon contributors, using the supplied figures.
+3. Three practical carbon-reduction recommendations.
+4. Cost-saving opportunities without promising unverified savings.
+5. Data limitations, including illustrative emission factors and possible
+   double-counting if concrete and its ingredients are counted separately.
 
-Include these sections:
-
-## 1. Executive Summary
-Briefly summarize the estimated carbon footprint and material cost.
-
-## 2. Main Carbon Contributors
-Identify the materials contributing most to the calculated emissions.
-Use the provided data and calculate percentages carefully.
-
-## 3. Carbon Reduction Strategies
-Suggest three practical ways to reduce embodied carbon.
-Mention relevant structural, engineering, durability, and local-code
-requirements where appropriate.
-
-## 4. Cost Optimization
-Suggest practical procurement, material efficiency, and mix-design ideas.
-Do not promise savings without verified cost data.
-
-## 5. Data Quality and Limitations
-Explain that emission factors and costs may be illustrative.
-Warn about possible double-counting if concrete and its ingredients
-are all counted separately.
-Mention that transport, construction, and end-of-life impacts may
-be excluded.
-
-IMPORTANT RULES:
-- Treat all calculated results as estimates, not certified assessments.
-- Do not invent emission factors, prices, citations, or verified sources.
-- Do not claim a specific carbon reduction percentage without a
-  reliable basis and relevant project information.
-- Distinguish general recommendations from results calculated
-  directly from the supplied data.
-- Respect the units and scope limitations of the input data.
-- If information is insufficient, clearly state what must be verified.
-- Do not claim the project complies with any building code unless verified.
-- Keep the report concise, practical, and professional.
+Treat all results as estimates. Do not invent factors, prices, sources,
+or carbon-reduction percentages. Keep the response under 400 words.
 """
 
         response = llm.invoke(prompt)
@@ -171,7 +143,8 @@ IMPORTANT RULES:
 
         return recommendation_text
 
-    except Exception:
+    except Exception as e:
+        print(f"Gemini API error: {type(e).__name__}: {e}", flush=True)
         # Avoid exposing credentials or raw internal error details
         return (
             "⚠️ **AI recommendations temporarily unavailable**\n\n"
