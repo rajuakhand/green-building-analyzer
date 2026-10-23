@@ -1,0 +1,6 @@
+
+material,unit,emission_factor,unit_cost,currency,source
+Cement,kg,0.90,1.00,INR,Illustrative demo value
+Sand,kg,0.01,1.00,INR,Illustrative demo value
+Aggregate,kg,0.005,1.00,INR,Illustrative demo value
+Concrete,kg,0.13,1.00,INR,Illustrative demo value
