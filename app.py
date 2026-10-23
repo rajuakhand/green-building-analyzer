@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import google.generativeai as genai
+from fpdf import FPDF
 
 # Page configuration
 st.set_page_config(
@@ -11,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# API Key Configuration (Streamlit Secrets ba environment variable theke load korbe)
+# API Key Configuration
 api_key = None
 if "GEMINI_API_KEY" in st.secrets:
     api_key = st.secrets["GEMINI_API_KEY"]
@@ -30,39 +31,52 @@ st.markdown("---")
 st.sidebar.header("🧭 Navigation & Menu")
 option = st.sidebar.selectbox(
     "Choose a Section",
-    ["Dashboard & Overview", "Material Carbon Footprint (Plotly)", "AI Recommendations"]
+    ["Dashboard & Overview", "Material Carbon Footprint (Plotly)", "AI Recommendations & PDF Report"]
 )
 
-# --- Plotly Interactive Chart Function ---
-def show_material_emissions_chart():
-    st.subheader("📊 Material Carbon Footprint Comparison (Plotly Interactive)")
-    st.write("Nicher interactive chart-ti theke alada building material-er carbon emission tulona dekhte parben. Apni chart-er opor hover ba zoom korte parben.")
+# Sample Data for Materials
+material_data = {
+    'Material': ['Concrete', 'Steel', 'Glass', 'Wood', 'Aluminum'],
+    'Carbon Emission (kg CO2e)': [300, 550, 200, -50, 800]
+}
+df_materials = pd.DataFrame(material_data)
+
+# --- PDF Generation Function ---
+def generate_pdf(df, ai_text):
+    pdf = FPDF()
+    pdf.add_page()
     
-    # Material emission data
-    data = {
-        'Material': ['Concrete', 'Steel', 'Glass', 'Wood', 'Aluminum'],
-        'Carbon Emission (kg CO2e)': [300, 550, 200, -50, 800]
-    }
-    df = pd.DataFrame(data)
+    # Title
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(200, 10, txt="Green Building Analyzer Report", ln=True, align="C")
     
-    # Plotly Bar Chart toiri kora
-    fig = px.bar(
-        df, 
-        x='Material', 
-        y='Carbon Emission (kg CO2e)',
-        title='Carbon Footprint by Building Material',
-        color='Carbon Emission (kg CO2e)',
-        color_continuous_scale='Greens',
-        text='Carbon Emission (kg CO2e)'
-    )
+    pdf.set_font("Arial", "", 10)
+    pdf.cell(200, 8, txt="AI-Powered Smart Green Building & Carbon Footprint Assessment", ln=True, align="C")
+    pdf.ln(10)
     
-    fig.update_layout(
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-    )
+    # Section 1: Material Emissions Summary
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(200, 10, txt="1. Material Carbon Footprint Summary", ln=True)
+    pdf.set_font("Arial", "", 10)
     
-    # Streamlit-e Plotly chart render kora
-    st.plotly_chart(fig, use_container_width=True)
+    for index, row in df.iterrows():
+        pdf.cell(200, 8, txt=f"- {row['Material']}: {row['Carbon Emission (kg CO2e)']} kg CO2e", ln=True)
+    
+    pdf.ln(10)
+    
+    # Section 2: AI Recommendations
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(200, 10, txt="2. AI-Powered Recommendations & Insights", ln=True)
+    pdf.set_font("Arial", "", 10)
+    
+    # Clean up text for FPDF (handles multi-line text)
+    if not ai_text:
+        ai_text = "No AI recommendations generated yet."
+    
+    pdf.multi_cell(0, 8, txt=ai_text)
+    
+    # Return PDF as bytes
+    return pdf.output(dest='S').encode('latin1')
 
 # --- Section 1: Dashboard ---
 if option == "Dashboard & Overview":
@@ -79,15 +93,32 @@ if option == "Dashboard & Overview":
 
 # --- Section 2: Plotly Charts ---
 elif option == "Material Carbon Footprint (Plotly)":
-    show_material_emissions_chart()
+    st.subheader("📊 Material Carbon Footprint Comparison (Plotly Interactive)")
+    st.write("Nicher interactive chart-ti theke alada building material-er carbon emission tulona dekhte parben.")
+    
+    fig = px.bar(
+        df_materials, 
+        x='Material', 
+        y='Carbon Emission (kg CO2e)',
+        title='Carbon Footprint by Building Material',
+        color='Carbon Emission (kg CO2e)',
+        color_continuous_scale='Greens',
+        text='Carbon Emission (kg CO2e)'
+    )
+    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
+    st.plotly_chart(fig, use_container_width=True)
 
-# --- Section 3: AI Recommendations ---
-elif option == "AI Recommendations":
-    st.header("🤖 Gemini AI-Powered Green Building Insights")
-    st.write("Apnar building ba material details niche likhe AI recommendation generate korun:")
+# --- Section 3: AI Recommendations & PDF Report ---
+elif option == "AI Recommendations & PDF Report":
+    st.header("🤖 Gemini AI Insights & PDF Report Generator")
+    st.write("Project details diye AI recommendations generate করুন এবং এক ক্লিকে অফিশিয়াল পিডিএফ রিপোর্ট ডাউনলোড করুন।")
     
     user_input = st.text_area("Enter project details or material specifications:", placeholder="E.g., Using 40% recycled concrete for commercial building...")
     
+    # Session state to store AI response for PDF
+    if "ai_response_text" not in st.session_state:
+        st.session_state["ai_response_text"] = ""
+
     if st.button("Generate AI Recommendations"):
         if not api_key:
             st.error("Please configure your GEMINI_API_KEY in Streamlit Cloud Secrets.")
@@ -98,11 +129,25 @@ elif option == "AI Recommendations":
                 with st.spinner("Analyzing with Google Gemini AI..."):
                     model = genai.GenerativeModel("gemini-1.5-flash")
                     response = model.generate_content(f"Provide professional green building and carbon footprint reduction recommendations for: {user_input}")
-                    st.success("AI Insights Generated Successfully:")
-                    st.write(response.text)
+                    st.session_state["ai_response_text"] = response.text
+                    st.success("AI Insights Generated Successfully!")
             except Exception as e:
-<<<<<<< HEAD
                 st.error(f"Error generating AI response: {e}")
-=======
-                st.error(f"Error generating AI response: {e}")
->>>>>>> 484d3be487c0fd6b4acb7e63a9c6ae66f75ebbdd
+
+    # Display AI text if available
+    if st.session_state["ai_response_text"]:
+        st.markdown("### AI Recommendations:")
+        st.write(st.session_state["ai_response_text"])
+        
+        st.markdown("---")
+        st.subheader("📥 Download Official PDF Report")
+        st.write("আপনার জেনারেট করা ডাটা এবং এআই সাজেশনসহ প্রফেশনাল পিডিএফ রিপোর্ট ডাউনলোড করুন:")
+        
+        pdf_data = generate_pdf(df_materials, st.session_state["ai_response_text"])
+        
+        st.download_button(
+            label="📄 Download PDF Report",
+            data=pdf_data,
+            file_name="Green_Building_Analyzer_Report.pdf",
+            mime="application/pdf"
+        )
