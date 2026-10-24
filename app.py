@@ -1,156 +1,600 @@
+from io import BytesIO
 import os
-import streamlit as st
+from pathlib import Path
+
 import pandas as pd
 import plotly.express as px
-import google.generativeai as genai
+import streamlit as st
 from fpdf import FPDF
 
-# Page configuration
+from src.calculator import calculate_footprint, summarize_footprint
+from src.ai_engine import get_ai_recommendations
+
+
+# --------------------------------------------------
+# Page Configuration
+# --------------------------------------------------
 st.set_page_config(
     page_title="Green Building Analyzer",
-    page_icon="🏢",
-    layout="wide"
+    page_icon="🌱",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-# API Key Configuration (Safe for both Local & Streamlit Cloud)
-api_key = None
-try:
-    if "GEMINI_API_KEY" in st.secrets:
-        api_key = st.secrets["GEMINI_API_KEY"]
-except Exception:
-    pass
 
-if not api_key:
-    api_key = os.getenv("GEMINI_API_KEY")
+# --------------------------------------------------
+# Local / Cloud API configuration
+# --------------------------------------------------
+def get_google_api_key():
+    """Read a key from Streamlit Secrets or environment variables safely."""
+    for key_name in ("GOOGLE_API_KEY", "GEMINI_API_KEY"):
+        try:
+            value = st.secrets.get(key_name)
+            if value:
+                return str(value)
+        except Exception:
+            # Local machine may not have a Streamlit secrets.toml file.
+            # Continue by checking environment variables.
+            pass
 
-if api_key:
-    genai.configure(api_key=api_key)
-# App Header
-st.title("🌱 Green Building Analyzer")
-st.markdown("**AI-Powered Smart Green Building and Material Footprint Analyzer**")
-st.markdown("---")
+        value = os.getenv(key_name)
+        if value:
+            return value
 
-# Sidebar for Navigation
-st.sidebar.header("🧭 Navigation & Menu")
-option = st.sidebar.selectbox(
-    "Choose a Section",
-    ["Dashboard & Overview", "Material Carbon Footprint (Plotly)", "AI Recommendations & PDF Report"]
-)
+    return None
 
-# Sample Data for Materials
-material_data = {
-    'Material': ['Concrete', 'Steel', 'Glass', 'Wood', 'Aluminum'],
-    'Carbon Emission (kg CO2e)': [300, 550, 200, -50, 800]
-}
-df_materials = pd.DataFrame(material_data)
 
-# --- PDF Generation Function ---
-def generate_pdf(df, ai_text):
+# Do not print or display the API key.
+api_key_available = bool(get_google_api_key())
+
+
+# --------------------------------------------------
+# PDF Report Generator
+# --------------------------------------------------
+def pdf_safe_text(value):
+    """
+    FPDF core fonts use a limited character set.
+    Replace unsupported characters so report generation won't fail
+    when AI output contains Unicode symbols or emoji.
+    """
+    text = str(value if value is not None else "")
+    replacements = {
+        "CO₂e": "CO2e",
+        "CO₂": "CO2",
+        "₹": "INR ",
+        "–": "-",
+        "—": "-",
+        "’": "'",
+        "‘": "'",
+        "“": '"',
+        "”": '"',
+        "•": "-",
+        "×": "x",
+        "≥": ">=",
+        "≤": "<=",
+        "→": "->",
+        "₂": "2",
+        "₃": "3",
+        "🌱": "",
+        "🏢": "",
+        "🤖": "",
+        "📊": "",
+        "📌": "",
+        "📋": "",
+        "📥": "",
+        "⚠️": "Warning: ",
+        "✅": "[OK] ",
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+
+    # Keep Latin-1 characters supported by FPDF's built-in Arial font.
+    return text.encode("latin-1", errors="replace").decode("latin-1")
+
+
+def generate_pdf_report(results_df, total_cost, total_carbon, recommendations):
+    """Create a PDF report using the current calculated results."""
     pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
-    
-    # Title
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(200, 10, txt="Green Building Analyzer Report", ln=True, align="C")
-    
-    pdf.set_font("Arial", "", 10)
-    pdf.cell(200, 8, txt="AI-Powered Smart Green Building & Carbon Footprint Assessment", ln=True, align="C")
-    pdf.ln(10)
-    
-    # Section 1: Material Emissions Summary
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(200, 10, txt="1. Material Carbon Footprint Summary", ln=True)
-    pdf.set_font("Arial", "", 10)
-    
-    for index, row in df.iterrows():
-        pdf.cell(200, 8, txt=f"- {row['Material']}: {row['Carbon Emission (kg CO2e)']} kg CO2e", ln=True)
-    
-    pdf.ln(10)
-    
-    # Section 2: AI Recommendations
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(200, 10, txt="2. AI-Powered Recommendations & Insights", ln=True)
-    pdf.set_font("Arial", "", 10)
-    
-    # Clean up text for FPDF (handles multi-line text)
-    if not ai_text:
-        ai_text = "No AI recommendations generated yet."
-    
-    pdf.multi_cell(0, 8, txt=ai_text)
-    
-    # Return PDF as bytes
-    return pdf.output(dest='S').encode('latin1')
 
-# --- Section 1: Dashboard ---
-if option == "Dashboard & Overview":
-    st.header("Welcome to Green Building Dashboard")
-    st.write("Eikhane apnar project-er summary ebong core metrics dekhte parben.")
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric(label="Analyzed Materials", value="5 Types")
-    with col2:
-        st.metric(label="Average Emission Score", value="300 kg CO2e")
-    with col3:
-        st.metric(label="Sustainability Status", value="Optimized 🌟")
+    pdf.set_title("Green Building Analyzer Report")
+    pdf.set_author("Green Building Analyzer")
 
-# --- Section 2: Plotly Charts ---
-elif option == "Material Carbon Footprint (Plotly)":
-    st.subheader("📊 Material Carbon Footprint Comparison (Plotly Interactive)")
-    st.write("Nicher interactive chart-ti theke alada building material-er carbon emission tulona dekhte parben.")
-    
-    fig = px.bar(
-        df_materials, 
-        x='Material', 
-        y='Carbon Emission (kg CO2e)',
-        title='Carbon Footprint by Building Material',
-        color='Carbon Emission (kg CO2e)',
-        color_continuous_scale='Greens',
-        text='Carbon Emission (kg CO2e)'
+    pdf.set_font("Arial", "B", 17)
+    pdf.cell(0, 11, "Green Building Analyzer", ln=True, align="C")
+
+    pdf.set_font("Arial", "", 10)
+    pdf.cell(
+        0,
+        7,
+        "Estimated Construction Material Cost and Carbon Report",
+        ln=True,
+        align="C",
     )
-    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig, use_container_width=True)
+    pdf.ln(5)
 
-# --- Section 3: AI Recommendations & PDF Report ---
-elif option == "AI Recommendations & PDF Report":
-    st.header("🤖 Gemini AI Insights & PDF Report Generator")
-    st.write("Project details diye AI recommendations generate করুন এবং এক ক্লিকে অফিশিয়াল পিডিএফ রিপোর্ট ডাউনলোড করুন।")
-    
-    user_input = st.text_area("Enter project details or material specifications:", placeholder="E.g., Using 40% recycled concrete for commercial building...")
-    
-    # Session state to store AI response for PDF
-    if "ai_response_text" not in st.session_state:
-        st.session_state["ai_response_text"] = ""
+    pdf.set_font("Arial", "", 9)
+    pdf.multi_cell(
+        0,
+        5,
+        "Purpose: preliminary planning and educational estimates. "
+        "This report is not a certified life-cycle assessment.",
+    )
+    pdf.ln(3)
 
-    if st.button("Generate AI Recommendations"):
-        if not api_key:
-            st.error("Please configure your GEMINI_API_KEY in Streamlit Cloud Secrets.")
-        elif not user_input:
-            st.warning("Please enter some project details first.")
-        else:
-            try:
-                with st.spinner("Analyzing with Google Gemini AI..."):
-                    model = genai.GenerativeModel("gemini-1.5-flash")
-                    response = model.generate_content(f"Provide professional green building and carbon footprint reduction recommendations for: {user_input}")
-                    st.session_state["ai_response_text"] = response.text
-                    st.success("AI Insights Generated Successfully!")
-            except Exception as e:
-                st.error(f"Error generating AI response: {e}")
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 8, "1. Project Summary", ln=True)
 
-    # Display AI text if available
-    if st.session_state["ai_response_text"]:
-        st.markdown("### AI Recommendations:")
-        st.write(st.session_state["ai_response_text"])
-        
-        st.markdown("---")
-        st.subheader("📥 Download Official PDF Report")
-        st.write("আপনার জেনারেট করা ডাটা এবং এআই সাজেশনসহ প্রফেশনাল পিডিএফ রিপোর্ট ডাউনলোড করুন:")
-        
-        pdf_data = generate_pdf(df_materials, st.session_state["ai_response_text"])
-        
-        st.download_button(
-            label="📄 Download PDF Report",
-            data=pdf_data,
-            file_name="Green_Building_Analyzer_Report.pdf",
-            mime="application/pdf"
+    pdf.set_font("Arial", "", 10)
+    pdf.cell(0, 7, f"Estimated material cost: INR {total_cost:,.2f}", ln=True)
+    pdf.cell(0, 7, f"Estimated carbon footprint: {total_carbon:,.2f} kg CO2e", ln=True)
+    pdf.cell(0, 7, f"Materials analyzed: {len(results_df)}", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 8, "2. Material-wise Results", ln=True)
+
+    # Table headings
+    col_widths = [48, 20, 27, 30, 30, 30]
+    headers = ["Material", "Unit", "Quantity", "Unit cost (INR)", "Cost (INR)", "Carbon (kg CO2e)"]
+
+    pdf.set_font("Arial", "B", 8)
+    for width, header in zip(col_widths, headers):
+        pdf.cell(width, 8, pdf_safe_text(header), border=1)
+    pdf.ln()
+
+    pdf.set_font("Arial", "", 8)
+    for _, row in results_df.iterrows():
+        values = [
+            pdf_safe_text(row.get("material", ""))[:27],
+            pdf_safe_text(row.get("unit", ""))[:10],
+            f"{float(row.get('quantity', 0)):,.2f}",
+            f"{float(row.get('unit_cost', 0)):,.2f}",
+            f"{float(row.get('estimated_cost', 0)):,.2f}",
+            f"{float(row.get('carbon_kg_co2e', 0)):,.2f}",
+        ]
+
+        # Add a new page before the table row if necessary.
+        if pdf.get_y() > 265:
+            pdf.add_page()
+            pdf.set_font("Arial", "B", 8)
+            for width, header in zip(col_widths, headers):
+                pdf.cell(width, 8, pdf_safe_text(header), border=1)
+            pdf.ln()
+            pdf.set_font("Arial", "", 8)
+
+        for width, value in zip(col_widths, values):
+            pdf.cell(width, 7, pdf_safe_text(value), border=1)
+        pdf.ln()
+
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 8, "3. AI Recommendations", ln=True)
+    pdf.set_font("Arial", "", 9)
+
+    recommendation_text = recommendations or (
+        "No AI recommendations were generated during this session."
+    )
+    pdf.multi_cell(0, 5, pdf_safe_text(recommendation_text))
+
+    pdf.ln(4)
+    pdf.set_font("Arial", "B", 11)
+    pdf.cell(0, 8, "4. Data Limitations and Assumptions", ln=True)
+    pdf.set_font("Arial", "", 9)
+    limitations = (
+        "- Results depend on the material quantities and emission factors "
+        "provided to the application.\n"
+        "- Emission factors and default prices may be illustrative and "
+        "must be independently verified before real-world decisions.\n"
+        "- Ensure each quantity unit matches its emission-factor unit.\n"
+        "- If concrete includes cement, sand, and aggregate, counting both "
+        "the concrete and its ingredients may double-count emissions.\n"
+        "- This report does not claim to be a complete or certified "
+        "whole-life carbon assessment."
+    )
+    pdf.multi_cell(0, 5, pdf_safe_text(limitations))
+
+    # fpdf2 returns bytes/bytearray with output(); handle supported versions.
+    output = pdf.output()
+    if isinstance(output, bytearray):
+        return bytes(output)
+    if isinstance(output, bytes):
+        return output
+    # Compatibility fallback for older FPDF versions.
+    return bytes(output)
+
+
+# --------------------------------------------------
+# Custom Styling
+# --------------------------------------------------
+st.markdown(
+    """
+    <style>
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    div[data-testid="stMetric"] {
+        background-color: rgba(128, 128, 128, 0.08);
+        border: 1px solid rgba(128, 128, 128, 0.20);
+        padding: 16px;
+        border-radius: 12px;
+    }
+    .hero-caption {
+        font-size: 1rem;
+        opacity: 0.8;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+# --------------------------------------------------
+# Header
+# --------------------------------------------------
+st.title("🌱 Green Building Analyzer")
+st.markdown(
+    '<p class="hero-caption">'
+    "AI-powered construction material cost and carbon footprint analysis"
+    "</p>",
+    unsafe_allow_html=True,
+)
+st.divider()
+
+
+# --------------------------------------------------
+# Load Material Data
+# --------------------------------------------------
+DATA_FILE = Path(__file__).resolve().parent / "data" / "materials.csv"
+
+try:
+    materials_df = pd.read_csv(DATA_FILE)
+
+    required_columns = {
+        "material",
+        "unit",
+        "emission_factor",
+        "unit_cost",
+    }
+    missing_columns = required_columns - set(materials_df.columns)
+
+    if missing_columns:
+        st.error(
+            "Materials CSV is missing required columns: "
+            + ", ".join(sorted(missing_columns))
         )
+        st.stop()
+
+    if materials_df.empty:
+        st.error("No material data found in materials.csv.")
+        st.stop()
+
+    materials_df["material"] = materials_df["material"].astype("string").str.strip()
+    materials_df["unit"] = materials_df["unit"].astype("string").str.strip()
+
+    if materials_df["material"].isna().any() or materials_df["material"].eq("").any():
+        st.error("Material names cannot be empty.")
+        st.stop()
+
+    if materials_df["unit"].isna().any() or materials_df["unit"].eq("").any():
+        st.error("Material units cannot be empty.")
+        st.stop()
+
+    if materials_df["material"].duplicated().any():
+        st.error("Each material must have a unique name.")
+        st.stop()
+
+    for column in ["emission_factor", "unit_cost"]:
+        materials_df[column] = pd.to_numeric(materials_df[column], errors="raise")
+
+        if not materials_df[column].map(
+            lambda value: pd.notna(value) and abs(value) != float("inf")
+        ).all():
+            st.error(f"{column} must contain finite numeric values.")
+            st.stop()
+
+        if (materials_df[column] < 0).any():
+            st.error(f"{column} cannot contain negative values.")
+            st.stop()
+
+except FileNotFoundError:
+    st.error("Material data file not found: data/materials.csv")
+    st.stop()
+except (ValueError, pd.errors.ParserError) as error:
+    st.error(f"Unable to load material data: {error}")
+    st.stop()
+
+
+# --------------------------------------------------
+# Sidebar Inputs
+# --------------------------------------------------
+st.sidebar.title("🏗️ Project Inputs")
+st.sidebar.caption("Adjust material quantities and unit costs.")
+st.sidebar.info(
+    "Quantities and prices are user inputs. "
+    "Emission factors come from the project's CSV data."
+)
+
+rows = []
+for _, item in materials_df.iterrows():
+    material_name = str(item["material"])
+    unit = str(item["unit"])
+
+    with st.sidebar.expander(material_name, expanded=True):
+        quantity = st.number_input(
+            f"Quantity ({unit})",
+            min_value=0.0,
+            value=100.0,
+            step=10.0,
+            key=f"quantity_{material_name}",
+        )
+        unit_cost = st.number_input(
+            f"Cost per {unit} (INR)",
+            min_value=0.0,
+            value=float(item["unit_cost"]),
+            step=0.1,
+            key=f"cost_{material_name}",
+        )
+
+    rows.append(
+        {
+            "material": material_name,
+            "quantity": quantity,
+            "unit_cost": unit_cost,
+            "emission_factor": float(item["emission_factor"]),
+            "unit": unit,
+        }
+    )
+
+
+# --------------------------------------------------
+# Calculations
+# --------------------------------------------------
+try:
+    input_df = pd.DataFrame(rows)
+    df = calculate_footprint(
+        input_df[["material", "quantity", "unit_cost", "emission_factor"]]
+    )
+    df["unit"] = input_df["unit"].values
+    summary = summarize_footprint(df)
+except (ValueError, KeyError) as error:
+    st.error(f"Calculation failed: {error}")
+    st.stop()
+
+total_cost = summary["total_cost"]
+total_carbon = summary["total_carbon_kg"]
+
+
+# --------------------------------------------------
+# Session state for AI recommendations
+# --------------------------------------------------
+if "ai_recommendations_text" not in st.session_state:
+    st.session_state["ai_recommendations_text"] = ""
+
+
+# --------------------------------------------------
+# KPI Dashboard
+# --------------------------------------------------
+st.subheader("📊 Project Overview")
+carbon_col, cost_col, material_col = st.columns(3)
+
+carbon_col.metric("Estimated Carbon Footprint", f"{total_carbon:,.2f} kg CO₂e")
+cost_col.metric("Estimated Material Cost", f"₹{total_cost:,.2f}")
+material_col.metric("Materials Analyzed", f"{len(df)}")
+
+st.caption(
+    "Results are estimates based on the selected quantities "
+    "and the emission factors supplied in the project data."
+)
+st.divider()
+
+
+# --------------------------------------------------
+# Carbon Analysis
+# --------------------------------------------------
+st.subheader("🌍 Carbon Footprint by Material")
+chart_df = df.sort_values("carbon_kg_co2e", ascending=False)
+
+fig = px.bar(
+    chart_df,
+    x="material",
+    y="carbon_kg_co2e",
+    color="material",
+    text="carbon_kg_co2e",
+    labels={
+        "material": "Construction Material",
+        "carbon_kg_co2e": "Estimated Carbon (kg CO₂e)",
+    },
+    title="Estimated Embodied Carbon",
+)
+fig.update_traces(texttemplate="%{text:,.2f}", textposition="outside", cliponaxis=False)
+fig.update_layout(
+    showlegend=False,
+    margin=dict(l=20, r=20, t=60, b=20),
+    yaxis_title="Carbon (kg CO₂e)",
+    xaxis_title="Material",
+)
+st.plotly_chart(fig, use_container_width=True)
+
+
+# --------------------------------------------------
+# Material Contribution
+# --------------------------------------------------
+st.subheader("📌 Material Contribution")
+contribution_df = df[["material", "carbon_kg_co2e"]].copy()
+
+if total_carbon > 0:
+    contribution_df["carbon_share_percent"] = (
+        contribution_df["carbon_kg_co2e"] / total_carbon * 100
+    )
+else:
+    contribution_df["carbon_share_percent"] = 0.0
+
+contribution_df = contribution_df.sort_values("carbon_kg_co2e", ascending=False)
+
+st.dataframe(
+    contribution_df.rename(
+        columns={
+            "material": "Material",
+            "carbon_kg_co2e": "Carbon (kg CO₂e)",
+            "carbon_share_percent": "Carbon Share (%)",
+        }
+    ).style.format(
+        {
+            "Carbon (kg CO₂e)": "{:,.2f}",
+            "Carbon Share (%)": "{:.2f}%",
+        }
+    ),
+    use_container_width=True,
+    hide_index=True,
+)
+
+
+# --------------------------------------------------
+# Detailed Results
+# --------------------------------------------------
+st.subheader("📋 Detailed Material Results")
+display_df = df[
+    [
+        "material",
+        "unit",
+        "quantity",
+        "unit_cost",
+        "estimated_cost",
+        "emission_factor",
+        "carbon_kg_co2e",
+    ]
+].rename(
+    columns={
+        "material": "Material",
+        "unit": "Unit",
+        "quantity": "Quantity",
+        "unit_cost": "Unit Cost (INR)",
+        "estimated_cost": "Estimated Cost (INR)",
+        "emission_factor": "Emission Factor",
+        "carbon_kg_co2e": "Carbon (kg CO₂e)",
+    }
+)
+
+st.dataframe(
+    display_df.style.format(
+        {
+            "Quantity": "{:,.2f}",
+            "Unit Cost (INR)": "₹{:,.2f}",
+            "Estimated Cost (INR)": "₹{:,.2f}",
+            "Emission Factor": "{:,.4f}",
+            "Carbon (kg CO₂e)": "{:,.2f}",
+        }
+    ),
+    use_container_width=True,
+    hide_index=True,
+)
+
+
+# --------------------------------------------------
+# CSV Export
+# --------------------------------------------------
+st.subheader("📥 Export Your Analysis")
+csv_data = df.to_csv(index=False).encode("utf-8-sig")
+st.download_button(
+    label="Download Detailed Results (CSV)",
+    data=csv_data,
+    file_name="green_building_analysis.csv",
+    mime="text/csv",
+)
+
+
+# --------------------------------------------------
+# Data Quality Disclaimer
+# --------------------------------------------------
+st.warning(
+    "**Demo data disclaimer:** Emission factors and default prices "
+    "are illustrative and have not been independently verified. "
+    "Confirm units, local prices, and emission-factor sources before "
+    "using these results for real construction decisions."
+)
+st.info(
+    "**Important:** If the concrete quantity already includes cement, "
+    "sand, and aggregate, counting both concrete and its ingredients "
+    "may double-count carbon emissions and material costs."
+)
+
+
+# --------------------------------------------------
+# AI Recommendations
+# --------------------------------------------------
+st.divider()
+st.subheader("🤖 AI-Powered Sustainability Advisor")
+st.write(
+    "Generate recommendations for carbon reduction, material selection, "
+    "cost optimization, and data limitations."
+)
+
+if st.button("Generate AI Recommendations", type="primary", use_container_width=True):
+    if not api_key_available:
+        st.error(
+            "Gemini API key not found. Configure GOOGLE_API_KEY or "
+            "GEMINI_API_KEY in Streamlit Secrets or environment variables."
+        )
+    else:
+        try:
+            with st.spinner("Analyzing material data with Gemini AI..."):
+                recommendations = get_ai_recommendations(
+                    materials=df,
+                    total_carbon_kg=total_carbon,
+                    total_cost=total_cost,
+                )
+            st.session_state["ai_recommendations_text"] = str(recommendations or "")
+        except Exception as error:
+            st.error(
+                "AI recommendations could not be generated. "
+                "Check the configured API key and the AI module settings."
+            )
+            # Do not print secrets. The exception message can sometimes contain
+            # implementation details, so keep the user-facing error generic.
+            st.caption(f"Error type: {type(error).__name__}")
+
+if st.session_state["ai_recommendations_text"]:
+    st.markdown("### AI Recommendations")
+    st.markdown(st.session_state["ai_recommendations_text"])
+
+
+# --------------------------------------------------
+# PDF Report
+# --------------------------------------------------
+st.divider()
+st.subheader("📄 PDF Report Generator")
+st.write(
+    "Download a report containing the current calculation results, "
+    "material-level breakdown, and AI recommendations if generated."
+)
+
+try:
+    pdf_bytes = generate_pdf_report(
+        results_df=df,
+        total_cost=total_cost,
+        total_carbon=total_carbon,
+        recommendations=st.session_state["ai_recommendations_text"],
+    )
+    st.download_button(
+        label="Download PDF Report",
+        data=pdf_bytes,
+        file_name="Green_Building_Analyzer_Report.pdf",
+        mime="application/pdf",
+        help="Creates a PDF using the current quantities and costs.",
+    )
+except Exception as error:
+    st.error("PDF report generation failed. Check that fpdf2 is installed.")
+    st.caption(f"Error type: {type(error).__name__}")
+
+
+# --------------------------------------------------
+# Footer
+# --------------------------------------------------
+st.divider()
+st.caption(
+    "Green Building Analyzer | AI-assisted estimates for educational "
+    "and preliminary planning purposes. Not a certified life-cycle assessment."
+)
