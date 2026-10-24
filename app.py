@@ -8,6 +8,7 @@ import streamlit as st
 from fpdf import FPDF
 
 from src.calculator import calculate_footprint, summarize_footprint
+from src.advanced_lca import calculate_lca
 from src.ai_engine import get_ai_recommendations
 
 
@@ -92,7 +93,7 @@ def pdf_safe_text(value):
     return text.encode("latin-1", errors="replace").decode("latin-1")
 
 
-def generate_pdf_report(results_df, total_cost, total_carbon, recommendations):
+def generate_pdf_report(results_df, total_cost, total_carbon, recommendations, lca_breakdown=None, total_lifecycle_carbon=None):
     """Create a PDF report using the current calculated results."""
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -133,7 +134,33 @@ def generate_pdf_report(results_df, total_cost, total_carbon, recommendations):
     pdf.ln(4)
 
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 8, "2. Material-wise Results", ln=True)
+    pdf.cell(0, 8, "2. Life-Cycle Carbon Summary", ln=True)
+    pdf.set_font("Arial", "", 9)
+
+    if lca_breakdown is not None and total_lifecycle_carbon is not None:
+        pdf.cell(
+            0, 6,
+            f"Estimated total life-cycle carbon: {total_lifecycle_carbon:,.2f} kg CO2e",
+            ln=True,
+        )
+        for stage, carbon in lca_breakdown.items():
+            pdf.multi_cell(
+                0, 6,
+                pdf_safe_text(f"{stage}: {float(carbon):,.2f} kg CO2e"),
+                new_x="LMARGIN",
+                new_y="NEXT",
+            )
+    else:
+        pdf.multi_cell(
+            0, 6,
+            "Life-cycle stage breakdown was not provided for this report.",
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
+
+    pdf.ln(3)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 8, "3. Material-wise Results", ln=True)
 
     # Table headings
     col_widths = [48, 20, 27, 30, 30, 30]
@@ -170,7 +197,7 @@ def generate_pdf_report(results_df, total_cost, total_carbon, recommendations):
 
     pdf.ln(5)
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 8, "3. AI Recommendations", ln=True)
+    pdf.cell(0, 8, "4. AI Recommendations", ln=True)
     pdf.set_font("Arial", "", 9)
 
     recommendation_text = recommendations or (
@@ -180,7 +207,7 @@ def generate_pdf_report(results_df, total_cost, total_carbon, recommendations):
 
     pdf.ln(4)
     pdf.set_font("Arial", "B", 11)
-    pdf.cell(0, 8, "4. Data Limitations and Assumptions", ln=True)
+    pdf.cell(0, 8, "5. Data Limitations and Assumptions", ln=True)
     pdf.set_font("Arial", "", 9)
     limitations = (
         "- Results depend on the material quantities and emission factors "
@@ -350,6 +377,77 @@ for _, item in materials_df.iterrows():
 
 
 # --------------------------------------------------
+# Advanced LCA Inputs
+# --------------------------------------------------
+st.sidebar.divider()
+st.sidebar.subheader("🌍 Advanced Life-Cycle Assessment")
+st.sidebar.caption(
+    "Optional estimates for transport, operational electricity, "
+    "and end-of-life carbon. Verify all factors for your project."
+)
+
+with st.sidebar.expander("Transport emissions", expanded=False):
+    transport_tonnes = st.number_input(
+        "Transported material mass (tonnes)",
+        min_value=0.0,
+        value=0.0,
+        step=1.0,
+        key="lca_transport_tonnes",
+    )
+    transport_distance_km = st.number_input(
+        "One-way transport distance (km)",
+        min_value=0.0,
+        value=0.0,
+        step=10.0,
+        key="lca_transport_distance_km",
+    )
+    transport_factor = st.number_input(
+        "Transport factor (kg CO2e / tonne-km)",
+        min_value=0.0,
+        value=0.0,
+        step=0.01,
+        format="%.4f",
+        key="lca_transport_factor",
+        help="Enter a verified factor for the relevant vehicle and fuel.",
+    )
+
+with st.sidebar.expander("Operational electricity", expanded=False):
+    annual_energy_kwh = st.number_input(
+        "Annual electricity use (kWh)",
+        min_value=0.0,
+        value=0.0,
+        step=100.0,
+        key="lca_annual_energy_kwh",
+    )
+    building_lifetime_years = st.number_input(
+        "Building lifetime (years)",
+        min_value=1,
+        value=50,
+        step=1,
+        key="lca_building_lifetime_years",
+    )
+    electricity_factor = st.number_input(
+        "Electricity factor (kg CO2e / kWh)",
+        min_value=0.0,
+        value=0.0,
+        step=0.01,
+        format="%.4f",
+        key="lca_electricity_factor",
+        help="Enter a verified grid emission factor for the relevant location.",
+    )
+
+with st.sidebar.expander("End-of-life estimate", expanded=False):
+    end_of_life_carbon_kg = st.number_input(
+        "End-of-life emissions (kg CO2e)",
+        min_value=0.0,
+        value=0.0,
+        step=100.0,
+        key="lca_end_of_life_carbon_kg",
+        help="Enter a documented estimate; zero means no impact has been entered.",
+    )
+
+
+# --------------------------------------------------
 # Calculations
 # --------------------------------------------------
 try:
@@ -365,6 +463,25 @@ except (ValueError, KeyError) as error:
 
 total_cost = summary["total_cost"]
 total_carbon = summary["total_carbon_kg"]
+
+lca_result = calculate_lca(
+    embodied_carbon_kg=total_carbon,
+    transport_tonnes=transport_tonnes,
+    transport_distance_km=transport_distance_km,
+    transport_factor_kg_per_tonne_km=transport_factor,
+    annual_energy_kwh=annual_energy_kwh,
+    building_lifetime_years=int(building_lifetime_years),
+    electricity_factor_kg_per_kwh=electricity_factor,
+    end_of_life_carbon_kg=end_of_life_carbon_kg,
+)
+lca_breakdown_df = pd.DataFrame(
+    [
+        {"Life-Cycle Stage": stage, "Carbon (kg CO2e)": carbon}
+        for stage, carbon in lca_result["breakdown"].items()
+    ]
+)
+total_lifecycle_carbon = lca_result["total_lifecycle_carbon_kg"]
+
 
 
 # --------------------------------------------------
@@ -387,6 +504,50 @@ material_col.metric("Materials Analyzed", f"{len(df)}")
 st.caption(
     "Results are estimates based on the selected quantities "
     "and the emission factors supplied in the project data."
+)
+
+# --------------------------------------------------
+# Advanced LCA Dashboard
+# --------------------------------------------------
+st.subheader("🌍 Advanced Life-Cycle Carbon Assessment")
+st.metric(
+    "Estimated Total Life-Cycle Carbon",
+    f"{total_lifecycle_carbon:,.2f} kg CO₂e",
+)
+st.caption(
+    "Includes embodied material carbon, transport, operational electricity, "
+    "and the user-entered end-of-life estimate. Zero-valued inputs mean "
+    "no impact has been entered for that category; they do not prove "
+    "the real-world impact is zero."
+)
+
+lca_fig = px.bar(
+    lca_breakdown_df,
+    x="Carbon (kg CO2e)",
+    y="Life-Cycle Stage",
+    orientation="h",
+    text="Carbon (kg CO2e)",
+    title="Carbon by Life-Cycle Stage",
+    labels={
+        "Carbon (kg CO2e)": "Estimated Carbon (kg CO₂e)",
+        "Life-Cycle Stage": "Life-Cycle Stage",
+    },
+)
+lca_fig.update_traces(
+    texttemplate="%{text:,.2f}",
+    textposition="outside",
+    cliponaxis=False,
+)
+lca_fig.update_layout(
+    showlegend=False,
+    margin=dict(l=20, r=30, t=60, b=20),
+)
+st.plotly_chart(lca_fig, use_container_width=True)
+
+st.dataframe(
+    lca_breakdown_df.style.format({"Carbon (kg CO2e)": "{:,.2f}"}),
+    use_container_width=True,
+    hide_index=True,
 )
 st.divider()
 
@@ -497,7 +658,23 @@ st.dataframe(
 # CSV Export
 # --------------------------------------------------
 st.subheader("📥 Export Your Analysis")
-csv_data = df.to_csv(index=False).encode("utf-8-sig")
+csv_output = df.to_csv(index=False)
+
+lca_csv_summary = lca_breakdown_df.to_csv(index=False)
+lca_total_csv = pd.DataFrame(
+    [{
+        "Life-Cycle Stage": "TOTAL LIFE-CYCLE CARBON",
+        "Carbon (kg CO2e)": total_lifecycle_carbon,
+    }]
+).to_csv(index=False)
+
+csv_data = (
+    csv_output
+    + "\\n"
+    + "Life-Cycle Carbon Summary\\n"
+    + lca_csv_summary
+    + lca_total_csv
+).encode("utf-8-sig")
 st.download_button(
     label="Download Detailed Results (CSV)",
     data=csv_data,
@@ -554,7 +731,7 @@ if st.button("Generate AI Recommendations", type="primary", use_container_width=
             )
             # Do not print secrets. The exception message can sometimes contain
             # implementation details, so keep the user-facing error generic.
-            st.caption(f"Error type: {type(error).__name__}")
+            st.caption(f"Error type: {type(error).__name__}: {error!r}")
 
 if st.session_state["ai_recommendations_text"]:
     st.markdown("### AI Recommendations")
@@ -577,6 +754,8 @@ try:
         total_cost=total_cost,
         total_carbon=total_carbon,
         recommendations=st.session_state["ai_recommendations_text"],
+        lca_breakdown=lca_result["breakdown"],
+        total_lifecycle_carbon=total_lifecycle_carbon,
     )
     st.download_button(
         label="Download PDF Report",
@@ -586,8 +765,9 @@ try:
         help="Creates a PDF using the current quantities and costs.",
     )
 except Exception as error:
-    st.error("PDF report generation failed. Check that fpdf2 is installed.")
-    st.caption(f"Error type: {type(error).__name__}")
+    st.error("PDF report generation failed.")
+    st.caption(f"Error type: {type(error).__name__}: {error}")
+    st.exception(error)
 
 
 # --------------------------------------------------
