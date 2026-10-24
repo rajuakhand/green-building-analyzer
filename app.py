@@ -238,19 +238,83 @@ def generate_pdf_report(results_df, total_cost, total_carbon, recommendations, l
 st.markdown(
     """
     <style>
+    .stApp {
+        background-color: #FFFFFF;
+    }
+
     .block-container {
+        max-width: 1200px;
         padding-top: 2rem;
-        padding-bottom: 2rem;
+        padding-bottom: 3rem;
     }
+
+    h1, h2, h3 {
+        color: #173F35;
+        letter-spacing: -0.02em;
+    }
+
     div[data-testid="stMetric"] {
-        background-color: rgba(128, 128, 128, 0.08);
-        border: 1px solid rgba(128, 128, 128, 0.20);
-        padding: 16px;
-        border-radius: 12px;
+        background-color: #FFFFFF;
+        border: 1px solid #DDE5DF;
+        padding: 20px;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(23, 63, 53, 0.05);
     }
+
+    div[data-testid="stMetricLabel"] {
+        color: #52645B;
+    }
+
+    div[data-testid="stMetricValue"] {
+        color: #173F35;
+        font-weight: 700;
+    }
+
     .hero-caption {
-        font-size: 1rem;
-        opacity: 0.8;
+        color: #52645B;
+        font-size: 1.05rem;
+        line-height: 1.6;
+        margin-top: -0.4rem;
+    }
+
+    div.stButton > button,
+    div[data-testid="stDownloadButton"] > button {
+        background-color: #087F5B;
+        color: #FFFFFF;
+        border: 1px solid #087F5B;
+        border-radius: 10px;
+        padding: 0.55rem 1rem;
+        font-weight: 600;
+        transition: background-color 0.2s ease;
+    }
+
+    div.stButton > button:hover,
+    div[data-testid="stDownloadButton"] > button:hover {
+        background-color: #066849;
+        border-color: #066849;
+        color: #FFFFFF;
+    }
+
+    div[data-testid="stDataFrame"],
+    div[data-testid="stTable"] {
+        border: 1px solid #E2E8E3;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    hr {
+        border-color: #E2E8E3;
+    }
+
+    @media (max-width: 768px) {
+        .block-container {
+            padding-top: 1rem;
+            padding-bottom: 2rem;
+        }
+
+        div[data-testid="stMetric"] {
+            padding: 14px;
+        }
     }
     </style>
     """,
