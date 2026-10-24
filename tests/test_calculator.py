@@ -36,12 +36,6 @@ def test_calculate_footprint_negative_value():
         calculate_footprint(data)
 
 
-import pandas as pd
-import pytest
-
-from src.calculator import calculate_footprint, summarize_footprint
-
-
 def test_zero_quantity_and_zero_factors():
     materials = pd.DataFrame({
         "material": ["Concrete"],
