@@ -36,6 +36,8 @@ def test_calculate_footprint_negative_value():
         calculate_footprint(data)
 
 
+
+
 def test_zero_quantity_and_zero_factors():
     materials = pd.DataFrame({
         "material": ["Concrete"],
