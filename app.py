@@ -377,19 +377,28 @@ try:
         st.error("Each material must have a unique name.")
         st.stop()
 
-    for column in ["emission_factor", "unit_cost"]:
-        materials_df[column] = pd.to_numeric(materials_df[column], errors="raise")
+    if "source" in materials_df.columns:
+        demo_mask = materials_df["source"].astype(str).str.contains(
+            r"demo|not verified|unverified|illustrative",
+            case=False,
+            na=False,
+        )
 
-        if not materials_df[column].map(
-            lambda value: pd.notna(value) and abs(value) != float("inf")
-        ).all():
-            st.error(f"{column} must contain finite numeric values.")
-            st.stop()
+        if demo_mask.any():
+            demo_materials = ", ".join(
+                materials_df.loc[demo_mask, "material"].astype(str)
+            )
 
-        if (materials_df[column] < 0).any():
-            st.error(f"{column} cannot contain negative values.")
-            st.stop()
-
+            st.warning(
+                "Research data-quality notice: One or more material emission "
+                "factors are illustrative or have not been independently verified. "
+                f"Affected material(s): {demo_materials}. Results involving these "
+                "factors must not be interpreted as validated environmental "
+                "impact estimates or used to support comparative research claims. "
+                "Verify the factor against a traceable source, including its "
+                "functional unit, system boundary, material specification, "
+                "geographical scope, and reference year before publication."
+            )
 except FileNotFoundError:
     st.error("Material data file not found: data/materials.csv")
     st.stop()
@@ -718,11 +727,35 @@ st.dataframe(
 )
 
 
+
 # --------------------------------------------------
 # CSV Export
 # --------------------------------------------------
 st.subheader("📥 Export Your Analysis")
 csv_output = df.to_csv(index=False)
+
+# Save LCA inputs so the calculation can be reproduced later.
+lca_inputs_df = pd.DataFrame([
+    {"Input": "Transport mass (tonnes)", "Value": transport_tonnes},
+    {"Input": "Transport distance (km)", "Value": transport_distance_km},
+    {
+        "Input": "Transport emission factor (kg CO2e/tonne-km)",
+        "Value": transport_factor,
+    },
+    {"Input": "Annual electricity (kWh)", "Value": annual_energy_kwh},
+    {
+        "Input": "Building lifetime (years)",
+        "Value": building_lifetime_years,
+    },
+    {
+        "Input": "Electricity emission factor (kg CO2e/kWh)",
+        "Value": electricity_factor,
+    },
+    {
+        "Input": "End-of-life emissions (kg CO2e)",
+        "Value": end_of_life_carbon_kg,
+    },
+]).to_csv(index=False)
 
 lca_csv_summary = lca_breakdown_df.to_csv(index=False)
 lca_total_csv = pd.DataFrame(
@@ -734,9 +767,11 @@ lca_total_csv = pd.DataFrame(
 
 csv_data = (
     csv_output
-    + "\\n"
-    + "Life-Cycle Carbon Summary\\n"
+    + "\n\nLCA Input Assumptions\n"
+    + lca_inputs_df
+    + "\nLife-Cycle Carbon Summary\n"
     + lca_csv_summary
+    + "\n"
     + lca_total_csv
 ).encode("utf-8-sig")
 st.download_button(
