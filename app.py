@@ -10,7 +10,7 @@ from fpdf import FPDF
 from src.calculator import calculate_footprint, summarize_footprint
 from src.advanced_lca import calculate_lca
 from src.ai_engine import get_ai_recommendations
-
+from src.material_data import validate_materials
 
 # --------------------------------------------------
 # Page Configuration
@@ -343,52 +343,21 @@ DATA_FILE = Path(__file__).resolve().parent / "data" / "materials.csv"
 try:
     materials_df = pd.read_csv(DATA_FILE)
 
-    required_columns = {
-        "material",
-        "unit",
-        "emission_factor",
-        "unit_cost",
-    }
-    missing_columns = required_columns - set(materials_df.columns)
+    materials_df = validate_materials(materials_df)
 
-    if missing_columns:
-        st.error(
-            "Materials CSV is missing required columns: "
-            + ", ".join(sorted(missing_columns))
-        )
-        st.stop()
-
-    if materials_df.empty:
-        st.error("No material data found in materials.csv.")
-        st.stop()
-
-    materials_df["material"] = materials_df["material"].astype("string").str.strip()
-    materials_df["unit"] = materials_df["unit"].astype("string").str.strip()
-
-    if materials_df["material"].isna().any() or materials_df["material"].eq("").any():
-        st.error("Material names cannot be empty.")
-        st.stop()
-
-    if materials_df["unit"].isna().any() or materials_df["unit"].eq("").any():
-        st.error("Material units cannot be empty.")
-        st.stop()
-
-    if materials_df["material"].duplicated().any():
-        st.error("Each material must have a unique name.")
-        st.stop()
-
-    if "source" in materials_df.columns:
-        demo_mask = materials_df["source"].astype(str).str.contains(
-            r"demo|not verified|unverified|illustrative",
+    warning_mask = pd.Series(False, index=materials_df.index)
+    for column in ["source", "verification_status"]:
+       if column in materials_df.columns:
+          warning_mask |= materials_df[column].astype("string").str.contains(
+            r"demo|not verified|unverified|illustrative|needs.review",
             case=False,
             na=False,
         )
 
-        if demo_mask.any():
-            demo_materials = ", ".join(
-                materials_df.loc[demo_mask, "material"].astype(str)
-            )
-
+        if warning_mask.any():
+           demo_materials = ", ".join(
+             materials_df.loc[warning_mask, "material"].astype(str)
+           )
             st.warning(
                 "Research data-quality notice: One or more material emission "
                 "factors are illustrative or have not been independently verified. "

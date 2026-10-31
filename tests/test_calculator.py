@@ -128,3 +128,30 @@ def test_numeric_strings_are_converted():
 
     assert result.loc[0, "estimated_cost"] == 50
     assert result.loc[0, "carbon_kg_co2e"] == pytest.approx(7.6)
+
+@pytest.mark.parametrize(
+    ("column", "value"),
+    [
+        ("quantity", float("nan")),
+        ("quantity", float("inf")),
+        ("quantity", float("-inf")),
+        ("unit_cost", float("nan")),
+        ("unit_cost", float("inf")),
+        ("unit_cost", float("-inf")),
+        ("emission_factor", float("nan")),
+        ("emission_factor", float("inf")),
+        ("emission_factor", float("-inf")),
+    ],
+)
+def test_non_finite_values_rejected(column, value):
+    materials = pd.DataFrame({
+        "material": ["Concrete"],
+        "quantity": [10],
+        "unit_cost": [5],
+        "emission_factor": [0.76],
+    })
+
+    materials[column] = value
+
+    with pytest.raises(ValueError, match="finite numeric values"):
+        calculate_footprint(materials)

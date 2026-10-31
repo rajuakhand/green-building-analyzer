@@ -1,4 +1,4 @@
-
+import math
 import pandas as pd
 
 
@@ -25,6 +25,13 @@ def calculate_footprint(materials: pd.DataFrame) -> pd.DataFrame:
     for column in ["quantity", "unit_cost", "emission_factor"]:
         result[column] = pd.to_numeric(result[column], errors="raise")
 
+        if not result[column].map(
+            lambda value: pd.notna(value) and math.isfinite(value)
+        ).all():
+            raise ValueError(
+                f"{column} must contain only finite numeric values."
+            )
+
     if (result["quantity"] < 0).any():
         raise ValueError("Quantity cannot be negative.")
 
@@ -33,7 +40,6 @@ def calculate_footprint(materials: pd.DataFrame) -> pd.DataFrame:
 
     if (result["emission_factor"] < 0).any():
         raise ValueError("Emission factor cannot be negative.")
-
     result["estimated_cost"] = (
         result["quantity"] * result["unit_cost"]
     )
@@ -43,7 +49,6 @@ def calculate_footprint(materials: pd.DataFrame) -> pd.DataFrame:
     )
 
     return result
-
 
 def summarize_footprint(result: pd.DataFrame) -> dict:
     return {
