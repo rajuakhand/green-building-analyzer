@@ -1,0 +1,79 @@
+material_id,broad_category,material,gwp_cf,gwp_unit,energy_cf,energy_unit,boundary,geography,verification_status,source_tables
+MAT-001,Bricks,Common burnt clay bricks FPS class 7.5,1120,kg CO2e/1000 nos,12600,MJ/1000 nos,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-002,Cement,Portland cement,910,kg CO2e/tonne,6400,MJ/tonne,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-003,Steel/iron,Twisted steel / deformed bars,260,kg CO2e/quintal,3000,MJ/quintal,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-004,Aluminium,Aluminium T or L sections,33.9,kg CO2e/kg,330,MJ/kg,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-005,Sand,Coarse sand (zone III),14.679,kg CO2e/m3,179.41,MJ/m3,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-006,Tiles/stone,Ceramic glazed tiles (wall),11.859,kg CO2e/m2,138.06,MJ/m2,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-007,Wood/plywood,Block board flush door teak ply 35 mm,0.462,kg CO2e/m2,378,MJ/m2,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-008,Wood/plywood,Block board flush door lipping,0.462,kg CO2e/m2,378,MJ/m2,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-009,Aggregate,Stone aggregate 20 mm,14.94,kg CO2e/m3,182.6,MJ/m3,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-010,Aluminium,Anodising 15 microns,10.68,kg CO2e/kg,192.16,MJ/kg,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-011,Wood/plywood,Block board flush door commercial ply 35 mm,0.462,kg CO2e/m2,378,MJ/m2,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-012,Tiles/stone,Glazed ceramic floor tile,11.859,kg CO2e/m2,138.06,MJ/m2,Cradle-to-gate,India,Needs-review,S3
+MAT-013,Steel/iron,G.I. pipes 40 mm,3.22906,kg CO2e/kg,42.38143,MJ/kg,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-014,Steel/iron,MS round bar 6 mm,260,kg CO2e/quintal,3000,MJ/quintal,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-015,Aggregate,Stone aggregate 10 mm,14.94,kg CO2e/m3,182.6,MJ/m3,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-016,Steel/iron,MS round bar >12 mm,260,kg CO2e/quintal,3000,MJ/quintal,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-017,Steel/iron,G.I. pipes 20 mm,3.22906,kg CO2e/kg,42.38143,MJ/kg,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-018,Sand,Sand zone V (Jamuna),14.679,kg CO2e/m3,179.41,MJ/m3,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-019,Steel/iron,Plastic encapsulated MS foot rest,6.625,kg CO2e/each,2119.5176,MJ/each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-020,Pipes,U-PVC pipe 110 mm,719.9093,kg CO2e/m,415.956,MJ/m,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-021,Glass,Float glass 4 mm,15.1,kg CO2e/m2,212.5,MJ/m2,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-022,Aggregate,Stone aggregate 40 mm,14.94,kg CO2e/m3,182.6,MJ/m3,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-023,Admixture,Plasticizer/superplasticizer,1.88,kg CO2e/kg,32.9,MJ/kg,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-024,Steel/iron,G.I. pipes 15 mm,3.22906,kg CO2e/kg,42.38143,MJ/kg,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-025,Tiles/stone,Ceramic glazed tiles 300x300,11.859,kg CO2e/m2,138.06,MJ/m2,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-026,Steel/iron,MS flats up to 10 mm,250,kg CO2e/quintal,3000,MJ/quintal,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-027,Steel hardware,Steel plates side/bottom,1.5,kg CO2e/kg,302.5,MJ/kg,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-028,Steel hardware,Brass door stopper 150 mm,6.6,kg CO2e/each,66,MJ/each,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-029,Pipes,Stoneware pipe 150 mm,215.768,kg CO2e/each,276.94,MJ/each,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-030,Steel hardware,MS plates,1.5,kg CO2e/kg,302.5,MJ/kg,Cradle-to-gate,India,Needs-review,S3
+MAT-031,Pipes,U-PVC pipe 32 mm,719.9093,kg CO2e/m,415.956,MJ/m,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-032,Steel hardware,SS butt hinges,14.5,kg CO2e/10 Nos,183.4667,MJ/10 Nos,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-033,Steel/iron,G.I. pipes 25 mm,3.22906,kg CO2e/kg,42.38143,MJ/kg,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-034,Paint/primer/POP,Acrylic exterior primer,2.18947,kg CO2e/kg,42.3937,MJ/kg,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-035,Steel hardware,MS butt hinges,14.5,kg CO2e/10 Nos,183.4667,MJ/10 Nos,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-036,Steel hardware,Anodised aluminium butt hinges,0.902,kg CO2e/10 Nos,634.4554,MJ/10 Nos,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-037,Steel/iron,Pressed steel door frames,1.5,kg CO2e/kg,302.5,MJ/kg,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-038,Paint/primer/POP,Plaster of Paris,0.13,kg CO2e/kg,1.7,MJ/kg,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-039,Steel hardware,SS butt hinges heavy,14.5,kg CO2e/10 Nos,183.4667,MJ/10 Nos,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-040,Steel hardware,Hydraulic door closer,22.1559,kg CO2e/each,258.2463,MJ/each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-041,Drainage,C.I. cover and frame 300x300,112.008074,kg CO2e/10 each,529.7679,MJ/10 each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-042,Drainage,S.W. gully trap P type,112.008074,kg CO2e/10 each,529.7679,MJ/10 each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-043,Steel/iron,Structurals tees/angles/channels/joists,250,kg CO2e/quintal,3000,MJ/quintal,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-044,Wood,Kail wood scantlings,0.5,kg CO2e/10 cudm,20.5,MJ/10 cudm,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-045,Chemical,Chlorpyriphos/Lindane EC 20%,0.5927,kg CO2e/litre,588.34,MJ/litre,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-046,Paint/primer/POP,Premium acrylic exterior paint,1.49,kg CO2e/litre,37.08,MJ/litre,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-047,Tiles/stone,Kota stone slab 20-25 mm,2.912,kg CO2e/m2,22.88,MJ/m2,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-048,Steel hardware,Anodised aluminium tower bolt 300x10,32.04,kg CO2e/10 Nos,576.48,MJ/10 Nos,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-049,Misc,Neoprene/EPDM rubber gasket,0.8953,kg CO2e/m2,2.7,MJ/m2,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-050,Pipes,U-PVC pipe 75 mm,719.9093,kg CO2e/m,415.956,MJ/m,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-051,Wood,Kail wood planks,0.5,kg CO2e/10 cudm,20.5,MJ/10 cudm,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-052,Paint/primer/POP,Premium acrylic emulsion interior,0.706,kg CO2e/litre,17.84,MJ/litre,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-053,Steel hardware,Brass handles 100 mm,1.386,kg CO2e/each,25.204,MJ/each,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-054,Steel/iron,MS tubes hot finished welded,2.53,kg CO2e/kg,26.045,MJ/kg,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-055,Paint/primer/POP,Water thinnable cement primer,0.716,kg CO2e/litre,17.97,MJ/litre,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-056,Steel hardware,Column clamp 450x1070,1.5656,kg CO2e/each,138.78,MJ/each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-057,Steel hardware,Beam clamp 300-380,1.5656,kg CO2e/each,138.78,MJ/each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-058,Drainage,Circular C.I. box ceiling fan,0.97374369,kg CO2e/each,25.42886,MJ/each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-059,Steel hardware,SS screws 40 mm,1.55914,kg CO2e/100 Nos,24.4872,MJ/100 Nos,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-060,Steel hardware,Brass screws 25 mm,1.39986,kg CO2e/100 Nos,25.45604,MJ/100 Nos,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-061,Paint/primer/POP,Acrylic distemper VOC<50,0.53538,kg CO2e/kg,11.9385,MJ/kg,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-062,Steel hardware,Anodised aluminium tower bolt 150x10,16.02,kg CO2e/10 Nos,288.24,MJ/10 Nos,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-063,Steel/iron,MS round bar 12 mm,260,kg CO2e/quintal,3000,MJ/quintal,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-064,Steel hardware,Chromium plated brass screws 20 mm,1.125432,kg CO2e/100 Nos,20.4656,MJ/100 Nos,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-065,Steel hardware,Chromium plated brass screws 30 mm,1.39986,kg CO2e/100 Nos,25.45604,MJ/100 Nos,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-066,Paint/primer/POP,Ready mixed primer wood work,2.91,kg CO2e/litre,56.3836,MJ/litre,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-067,Paint/primer/POP,Black colour pigment,0.526866,kg CO2e/kg,13.3134,MJ/kg,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-068,Water supply,Brass full way valve 40 mm,1.8018,kg CO2e/each,32.7652,MJ/each,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-069,Drainage,C.I. grating 150x150,0.47426841,kg CO2e/10 each,18.64783,MJ/10 each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-070,Pipes,U-PVC seal ring 110 mm,0.1188,kg CO2e/each,2.211,MJ/each,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-071,Steel hardware,Corner angle 45x45x5 2.50m,1.401696,kg CO2e/each,16.72992,MJ/each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-072,Water supply,Brass full way valve 25 mm,0.9702,kg CO2e/each,17.6428,MJ/each,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-073,Sand,Fine sand zone IV,14.679,kg CO2e/m3,179.41,MJ/m3,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-074,Steel hardware,Double clip bridge clip,0.8,kg CO2e/each,9.6,MJ/each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-075,Steel hardware,Corner angle 45x45x5 1.50m,1.401696,kg CO2e/each,16.72992,MJ/each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-076,Steel hardware,Single clip,0.8,kg CO2e/each,9.6,MJ/each,Cradle-to-gate,India,Verified-from-paper-SI,S3
+MAT-077,Paint/primer/POP,Priming coat 40mm tube,2.91,kg CO2e/litre,56.3836,MJ/litre,Cradle-to-gate,India,Verified-source-linked,S3
+MAT-078,Soil,Soil,0,kg CO2e/m3,0,MJ/m3,Cradle-to-gate,India,Needs-review,S3

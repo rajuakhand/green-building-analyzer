@@ -1,0 +1,5 @@
+material,unit,emission_factor,unit_cost,currency,source,source_url,source_reference,functional_unit,system_boundary,geography,reference_year,verification_status
+Portland Pozzolana Cement (PPC),kg,0.76,1.0,INR,"CPWD, Reducing Carbon Footprint in Buildings (2024)",https://cpwd.gov.in/Publication/Reducing_Carbon_Footprint_in_Buildings_2024.pdf,,"kg CO2e/kg (unverified)",Not specified,India,,Unverified
+Sand,kg,0.009,1.0,INR,"CPWD, Reducing Carbon Footprint in Buildings (2024)",https://cpwd.gov.in/Publication/Reducing_Carbon_Footprint_in_Buildings_2024.pdf,,"kg CO2e/kg (unverified)",Not specified,India,,Unverified
+Aggregate,kg,0.009,1.0,INR,"CPWD, Reducing Carbon Footprint in Buildings (2024)",https://cpwd.gov.in/Publication/Reducing_Carbon_Footprint_in_Buildings_2024.pdf,,"kg CO2e/kg (unverified)",Not specified,India,,Unverified
+Concrete,kg,0.13,1.0,INR,Illustrative demo value - not verified,,,,,,,Illustrative

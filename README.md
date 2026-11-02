@@ -11,6 +11,8 @@ The project is intended as a software tool for sustainable construction explorat
 
 **Live application:** [Open Green Building Analyzer](https://green-building-analyzer-xbwtufdrcywjjthgika3iw.streamlit.app/)
 
+**Web app:** [Open the Green Building Analyzer web app](https://rajuakhand.github.io/green-building-analyzer/) — a build-free front end in [`web/`](web/), served on GitHub Pages.
+
 **Source code:** [GitHub Repository](https://github.com/rajuakhand/green-building-analyzer)
 
 **Software DOI:** [10.5281/zenodo.23604851](https://doi.org/10.5281/zenodo.23604851)
