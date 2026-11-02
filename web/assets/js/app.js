@@ -26,6 +26,7 @@ import * as exportView from "./views/export.js";
 import * as lcaView from "./views/lca.js";
 import * as methodView from "./views/method.js";
 import * as sourcesView from "./views/sources.js";
+import * as statementView from "./views/statement.js";
 
 const VIEWS = {
   estimate: estimateView,
@@ -35,6 +36,7 @@ const VIEWS = {
   ai: aiView,
   method: methodView,
   sources: sourcesView,
+  statement: statementView,
   export: exportView,
 };
 
@@ -141,6 +143,11 @@ function handleInput(event) {
     case "catalogue-search":
       set((state) => {
         state.catalogue.search = el.value;
+      });
+      break;
+    case "project":
+      set((state) => {
+        state.project[el.dataset.field] = el.value;
       });
       break;
     default:

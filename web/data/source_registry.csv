@@ -1,6 +1,6 @@
 source_id,source_type,source_name,source_url,boundary,geography,verification_status
-SRC-001,ICMD,Research database,IFC India Construction Materials Database,https://edgebuildings.com/wp-content/uploads/2017/12/IFC-India-Construction-Materials-Database-Methodology-Report.pdf,Cradle-to-gate,India,Verified-from-paper-SI
-SRC-002,EPD sources,EPD,EPD International / OEKOBAU.DAT / manufacturer EPDs,varies,Cradle-to-gate (EPD),Varies,Verified-source-linked
-SRC-003,Other databases,Other database,Circular Ecology / ecoinvent,varies,Cradle-to-gate,Varies,Verified-source-linked
-SRC-004,Equipment estimates,Other/estimated,indiamart,https://www.indiamart.com/,Use-stage,India,Needs-review
-SRC-005,ACS paper,Journal paper,"Chaudhary & Akhtar 2023, ACS Environ. Au 3:94-104",https://pubs.acs.org/doi/10.1021/acsenvironau.2c00035,Cradle-to-site,India,Verified
+SRC-001,ICMD,"IFC India Construction Materials Database",https://edgebuildings.com/wp-content/uploads/2017/12/IFC-India-Construction-Materials-Database-Methodology-Report.pdf,Cradle-to-gate,India,Verified-from-paper-SI
+SRC-002,EPD sources,"EPD International / OEKOBAU.DAT / manufacturer EPDs",varies,Cradle-to-gate (EPD),Varies,Verified-source-linked
+SRC-003,Other databases,"Circular Ecology / ecoinvent",varies,Cradle-to-gate,Varies,Verified-source-linked
+SRC-004,Equipment estimates,indiamart,https://www.indiamart.com/,Use-stage,India,Needs-review
+SRC-005,ACS paper,"Chaudhary & Akhtar 2023, ACS Environ. Au 3:94-104",https://pubs.acs.org/doi/10.1021/acsenvironau.2c00035,Cradle-to-site,India,Verified

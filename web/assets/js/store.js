@@ -32,6 +32,13 @@ let state = {
     category: "all",
     inspectedId: null,
   },
+  /** Details printed on the project statement. */
+  project: {
+    name: "",
+    client: "",
+    site: "",
+    preparedBy: "",
+  },
   activeStage: "transport",
   aiText: "",
   aiRequested: false,
@@ -121,6 +128,7 @@ function hydrate() {
       ...saved,
       lca: { ...DEFAULT_LCA, ...(saved.lca || {}) },
       catalogue: { ...state.catalogue, ...(saved.catalogue || {}) },
+      project: { ...state.project, ...(saved.project || {}) },
     };
   } catch (error) {
     console.warn("Could not restore saved values", error);

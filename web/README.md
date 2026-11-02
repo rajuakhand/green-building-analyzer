@@ -49,6 +49,8 @@ dependencies — `package.json` only marks the folder as ES modules.
 - **AI recommendations** — the payload the advisor would receive and the current configuration state.
 - **Method** — the five formulas, the unit rule, the boundary and how to read the numbers.
 - **Data sources** — provenance for both datasets and the source registry.
+- **Project statement** — project details plus a printable material schedule (quantities, rates,
+  amounts, carbon per line) with totals and signature lines, for a client or a tender.
 - **Export** — analysis CSV download and a print-ready PDF report.
 
 ## Data files

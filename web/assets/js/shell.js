@@ -9,6 +9,7 @@ export const NAV = [
   { route: "ai", label: "AI recommendations", icon: "ti-sparkles" },
   { route: "method", label: "Method", icon: "ti-math-function" },
   { route: "sources", label: "Data sources", icon: "ti-database" },
+  { route: "statement", label: "Project statement", icon: "ti-file-invoice" },
   { route: "export", label: "Export", icon: "ti-download" },
 ];
 
