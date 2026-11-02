@@ -47,7 +47,9 @@ the files under `data/`, refresh the copies:
 python3 scripts/sync_web_data.py
 ```
 
-The GitHub Pages workflow does the same copy before publishing.
+Run that before committing, then commit `web/data/` together with the rest of the change. The
+GitHub Pages workflow publishes the committed copies as they are — it does not re-copy from
+`data/`, so the deployed site never disagrees with what you reviewed.
 
 ## Values and limitations
 

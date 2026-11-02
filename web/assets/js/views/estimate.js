@@ -27,9 +27,7 @@ export function render(root, ctx) {
       <i class="ti ti-alert-triangle notice__icon" aria-hidden="true"></i>
       <p class="notice__text">
         <strong>Data-quality notice.</strong> Emission factors are illustrative or not independently
-        verified. ${rows
-          .map((row) => `${escapeHtml(row.name)}: ${escapeHtml(row.verificationStatus)}`)
-          .join(". ")}.
+        verified. ${statusSummary(rows)}
       </p>
     </section>
 
@@ -50,7 +48,11 @@ export function render(root, ctx) {
               <div class="material-group">
                 <div class="material-group__head">
                   <p class="material-group__name">${escapeHtml(row.name)}</p>
-                  <span class="material-group__status">${escapeHtml(row.verificationStatus)}</span>
+                  ${
+                    row.verificationStatus
+                      ? `<span class="material-group__status">${escapeHtml(row.verificationStatus)}</span>`
+                      : ""
+                  }
                 </div>
                 <div class="field-row">
                   <label class="field" for="${qtyId}">
@@ -155,6 +157,38 @@ export function render(root, ctx) {
       actionRoute: "export",
     })}
   `;
+}
+
+/**
+ * Groups the stored verification statuses so the notice follows whatever the
+ * data file contains, including files that carry no status column at all.
+ */
+function statusSummary(rows) {
+  const byStatus = new Map();
+  const unrecorded = [];
+
+  rows.forEach((row) => {
+    const status = (row.verificationStatus || "").trim();
+    if (!status) {
+      unrecorded.push(row.name);
+      return;
+    }
+    if (!byStatus.has(status)) byStatus.set(status, []);
+    byStatus.get(status).push(row.name);
+  });
+
+  const parts = [];
+  byStatus.forEach((names, status) => {
+    parts.push(`${names.map(escapeHtml).join(", ")}: ${escapeHtml(status)}`);
+  });
+
+  if (unrecorded.length) {
+    parts.push(
+      `${unrecorded.map(escapeHtml).join(", ")}: no verification status recorded in the data file`
+    );
+  }
+
+  return `${parts.join(". ")}.`;
 }
 
 export function handleAction(action, ctx) {
