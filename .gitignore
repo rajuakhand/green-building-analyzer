@@ -1,20 +1,16 @@
-
-.venv/
+# Python
 __pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editors and OS
+.DS_Store
+.vscode/
+.idea/
+
+# Kombai design workspace (canvas files, local state)
+.kombai/
+
+# Secrets
 .env
-.streamlit/secrets.toml
-*.pyc
-
-# Local Streamlit agent skills (environment-specific symlinks)
-.agents/skills/developing-with-streamlit
-.claude/skills/developing-with-streamlit
-
-# Local backups; do not commit
-app.py.backup
-app.py.before-pdf-fix
-app.py.before-premium-style
-app.py.before-theme
-app.py.lca-backup
-
-# Local theme backup; do not deploy
-.streamlit/config.before-redesign.toml

@@ -28,6 +28,17 @@ served over HTTP. Opening `index.html` directly from disk will show a data-loadi
 | `assets/js/store.js` | State and localStorage persistence |
 | `assets/js/views/*.js` | The six views |
 | `data/*.csv` | Copies of the project data files |
+| `tests/calc.test.mjs` | Calculation tests, run with `node tests/calc.test.mjs` |
+
+## Tests
+
+```bash
+node web/tests/calc.test.mjs
+```
+
+Nine checks covering cost, embodied carbon, transport, operational carbon and the research
+totals, using the same expected values as the Python test suite. No test framework and no
+dependencies — `package.json` only marks the folder as ES modules.
 
 ## The six views
 
@@ -36,6 +47,8 @@ served over HTTP. Opening `index.html` directly from disk will show a data-loadi
 - **Research catalogue** — all 78 characterization factors, search, category filter, record inspector.
 - **Research calculator** — quantities in each factor's own unit, GWP and energy kept separate.
 - **AI recommendations** — the payload the advisor would receive and the current configuration state.
+- **Method** — the five formulas, the unit rule, the boundary and how to read the numbers.
+- **Data sources** — provenance for both datasets and the source registry.
 - **Export** — analysis CSV download and a print-ready PDF report.
 
 ## Data files

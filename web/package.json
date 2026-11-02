@@ -1,0 +1,10 @@
+{
+  "name": "green-building-analyzer-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Build-free front end for the Green Building Analyzer. No dependencies: this file only marks the folder as ES modules for Node so the calculation tests can run.",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/calc.test.mjs"
+  }
+}

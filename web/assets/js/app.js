@@ -24,6 +24,8 @@ import * as catalogueView from "./views/catalogue.js";
 import * as estimateView from "./views/estimate.js";
 import * as exportView from "./views/export.js";
 import * as lcaView from "./views/lca.js";
+import * as methodView from "./views/method.js";
+import * as sourcesView from "./views/sources.js";
 
 const VIEWS = {
   estimate: estimateView,
@@ -31,6 +33,8 @@ const VIEWS = {
   catalogue: catalogueView,
   calculator: calculatorView,
   ai: aiView,
+  method: methodView,
+  sources: sourcesView,
   export: exportView,
 };
 
@@ -62,6 +66,7 @@ function buildContext() {
   return {
     materials: data.materials,
     factors: data.factors,
+    sources: data.sources,
     categories: data.categories,
     state,
     derived: { rows, summary, lcaResult, stageLabels: STAGES },

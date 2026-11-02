@@ -1619,6 +1619,103 @@ sub {
 }
 
 /* ==========================================================================
+   Prose, formulas and counts (method and provenance views)
+   ========================================================================== */
+
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.prose p,
+.prose li {
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.prose ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.prose strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.formula-list {
+  margin-top: 4px;
+}
+
+.formula {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: var(--text-sm);
+}
+
+.formula:first-child {
+  border-top: 1px solid var(--hairline);
+}
+
+.formula__label {
+  color: var(--muted);
+}
+
+.formula__expr {
+  text-align: right;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.count-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.count {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.count__value {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.count__label {
+  margin-top: 6px;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.source-link {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.source-link:hover {
+  color: var(--green);
+}
+
+/* ==========================================================================
    Filters row (catalogue)
    ========================================================================== */
 
@@ -1749,6 +1846,10 @@ sub {
 
   .filters {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .count-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .calc-row {

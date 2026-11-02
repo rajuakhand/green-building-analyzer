@@ -6,23 +6,27 @@
 
 const MATERIALS_PATH = "data/materials.csv";
 const FACTORS_PATH = "data/material_factors.csv";
+const SOURCES_PATH = "data/source_registry.csv";
 
 let cache = null;
 
 export async function loadData() {
   if (cache) return cache;
 
-  const [materialsText, factorsText] = await Promise.all([
+  const [materialsText, factorsText, sourcesText] = await Promise.all([
     fetchText(MATERIALS_PATH),
     fetchText(FACTORS_PATH),
+    fetchTextSafe(SOURCES_PATH),
   ]);
 
   const materials = parseCsv(materialsText).map(normaliseMaterial);
   const factors = parseCsv(factorsText).map(normaliseFactor);
+  const sources = parseCsv(sourcesText).map(normaliseSource);
 
   cache = {
     materials,
     factors,
+    sources,
     categories: [...new Set(factors.map((row) => row.broadCategory))].sort((a, b) =>
       a.localeCompare(b)
     ),
@@ -42,6 +46,28 @@ async function fetchText(path) {
   }
 
   return response.text();
+}
+
+/** Optional data: a missing file leaves the view empty instead of failing. */
+async function fetchTextSafe(path) {
+  try {
+    const response = await fetch(path, { cache: "no-store" });
+    return response.ok ? await response.text() : "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function normaliseSource(row) {
+  return {
+    id: row.source_id,
+    type: row.source_type,
+    name: row.source_name,
+    url: row.source_url,
+    boundary: row.boundary,
+    geography: row.geography,
+    status: row.verification_status,
+  };
 }
 
 function normaliseMaterial(row) {
