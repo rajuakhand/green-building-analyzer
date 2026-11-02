@@ -48,6 +48,8 @@ dependencies — `package.json` only marks the folder as ES modules.
 - **Research calculator** — quantities in each factor's own unit, GWP and energy kept separate.
 - **AI recommendations** — the payload the advisor would receive and the current configuration state.
 - **Method** — the five formulas, the unit rule, the boundary and how to read the numbers.
+- **Compare scenarios** — the estimate as column A, an editable alternative as column B, with the
+  change per material, the change in totals and the cost of each kg CO₂e avoided.
 - **Data sources** — provenance for both datasets and the source registry.
 - **Project statement** — project details plus a printable material schedule (quantities, rates,
   amounts, carbon per line) with totals and signature lines, for a client or a tender.

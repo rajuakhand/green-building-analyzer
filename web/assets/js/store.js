@@ -22,6 +22,8 @@ let state = {
   /** material name -> quantity / unit cost */
   quantities: {},
   unitCosts: {},
+  /** alternative scenario quantities, compared against the estimate above */
+  scenarioB: {},
   lca: { ...DEFAULT_LCA },
   /** research material ids chosen in the catalogue */
   selectedFactors: [],
@@ -87,6 +89,13 @@ export function setValue(path, value) {
   });
 }
 
+/** Replaces the alternative scenario quantities in one go. */
+export function setScenarioB(quantities) {
+  set((draft) => {
+    draft.scenarioB = { ...quantities };
+  });
+}
+
 export function toggleFactor(materialId) {
   set((draft) => {
     const index = draft.selectedFactors.indexOf(materialId);
@@ -129,6 +138,7 @@ function hydrate() {
       lca: { ...DEFAULT_LCA, ...(saved.lca || {}) },
       catalogue: { ...state.catalogue, ...(saved.catalogue || {}) },
       project: { ...state.project, ...(saved.project || {}) },
+      scenarioB: { ...state.scenarioB, ...(saved.scenarioB || {}) },
     };
   } catch (error) {
     console.warn("Could not restore saved values", error);

@@ -26,6 +26,7 @@ import * as exportView from "./views/export.js";
 import * as lcaView from "./views/lca.js";
 import * as methodView from "./views/method.js";
 import * as sourcesView from "./views/sources.js";
+import * as compareView from "./views/compare.js";
 import * as statementView from "./views/statement.js";
 
 const VIEWS = {
@@ -36,6 +37,7 @@ const VIEWS = {
   ai: aiView,
   method: methodView,
   sources: sourcesView,
+  compare: compareView,
   statement: statementView,
   export: exportView,
 };
@@ -150,6 +152,11 @@ function handleInput(event) {
         state.project[el.dataset.field] = el.value;
       });
       break;
+    case "scenario-b-qty":
+      set((state) => {
+        state.scenarioB[el.dataset.material] = readNumber(el.value);
+      });
+      break;
     default:
       break;
   }
@@ -205,6 +212,7 @@ function handleClick(event) {
   if (estimateView.handleAction(action, ctx)) return;
   if (exportView.handleAction(action, ctx)) return;
   if (calculatorView.handleAction(action, ctx)) return;
+  if (compareView.handleAction(action, ctx)) return;
 }
 
 function routeFromHash() {
