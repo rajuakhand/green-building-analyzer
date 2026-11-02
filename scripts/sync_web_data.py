@@ -23,9 +23,11 @@ def main() -> int:
         source = DATA_DIR / name
         destination = WEB_DATA_DIR / name
 
+        # The web folder keeps its own committed copy, so a source file that is
+        # not tracked in git is skipped rather than breaking the deploy.
         if not source.exists():
-            print(f"missing: {source}")
-            return 1
+            print(f"skipped {name}: no data/{name} in this checkout, keeping web/data/{name}")
+            continue
 
         shutil.copyfile(source, destination)
         print(f"copied {name} -> {destination.relative_to(ROOT)}")
