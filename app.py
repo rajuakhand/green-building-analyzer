@@ -671,6 +671,21 @@ except (ValueError, pd.errors.ParserError) as error:
     st.error(f"Unable to load material data: {error}")
     st.stop()
 
+# Add imported materials from CSV upload
+imported_materials = st.session_state.get("imported_materials", [])
+if imported_materials:
+    imported_df = pd.DataFrame(imported_materials)
+    # Ensure required columns exist
+    for col in ["material", "unit", "emission_factor", "unit_cost"]:
+        if col not in imported_df.columns:
+            imported_df[col] = ""
+    imported_df = imported_df.rename(columns={"name": "material"})
+    materials_df = pd.concat([materials_df, imported_df], ignore_index=True)
+    materials_df = validate_materials(materials_df)
+
+
+# --------------------------------------------------
+# Research Material Factor Catalogue
 # --------------------------------------------------
 # Research Material Factor Catalogue
 # --------------------------------------------------
@@ -1166,6 +1181,89 @@ else:
 
 
 # --------------------------------------------------
+# Theme Toggle (Dark Mode)
+# --------------------------------------------------
+st.sidebar.divider()
+st.sidebar.subheader("🎨 Theme")
+
+if "dark_mode" not in st.session_state:
+    st.session_state["dark_mode"] = False
+
+dark_mode = st.sidebar.toggle(
+    "Dark Mode",
+    value=st.session_state["dark_mode"],
+    key="dark_mode_toggle",
+)
+st.session_state["dark_mode"] = dark_mode
+
+# Apply dark mode CSS
+if dark_mode:
+    st.markdown(
+        """
+        <style>
+        .stApp { background-color: #0e1117 !important; }
+        .stApp h1, .stApp h2, .stApp h3 { color: #ffffff !important; }
+        .stApp p, .stApp label, .stApp span { color: #e0e0e0 !important; }
+        .stMetric { background-color: #1e1e1e !important; border-color: #333 !important; }
+        .stDataFrame { background-color: #1e1e1e !important; }
+        .stSelectbox, .stTextInput, .stNumberInput { background-color: #1e1e1e !important; }
+        .stButton > button { background-color: #087f5b !important; color: #ffffff !important; }
+        .stSidebar { background-color: #0e1117 !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# --------------------------------------------------
+# CSV Import
+# --------------------------------------------------
+st.sidebar.divider()
+st.sidebar.subheader("📁 Import Materials")
+
+uploaded_file = st.sidebar.file_uploader(
+    "Upload CSV",
+    type=["csv"],
+    key="csv_uploader",
+    help="Columns: name, unit, emission_factor, unit_cost, source, verification_status",
+)
+
+import_mode = st.sidebar.selectbox(
+    "Import mode",
+    options=["Merge with existing", "Replace all"],
+    key="import_mode_select",
+)
+
+if uploaded_file is not None:
+    try:
+        import_df = pd.read_csv(uploaded_file)
+        required_cols = ["name", "unit", "emission_factor", "unit_cost"]
+        missing = [c for c in required_cols if c not in import_df.columns]
+
+        if missing:
+            st.sidebar.error(f"Missing columns: {', '.join(missing)}")
+        else:
+            st.sidebar.info(f"Found {len(import_df)} material(s) in CSV.")
+
+            if st.sidebar.button("Confirm Import", key="btn_confirm_import", use_container_width=True):
+                if import_mode == "Replace all":
+                    st.session_state["imported_materials"] = import_df.to_dict("records")
+                    st.sidebar.success("Materials imported (replace mode).")
+                else:
+                    existing = st.session_state.get("imported_materials", [])
+                    existing_names = {m["name"] for m in existing}
+                    new_materials = [
+                        m for m in import_df.to_dict("records")
+                        if m["name"] not in existing_names
+                    ]
+                    st.session_state["imported_materials"] = existing + new_materials
+                    st.sidebar.success(f"Imported {len(new_materials)} new material(s).")
+                st.rerun()
+    except Exception as e:
+        st.sidebar.error(f"Failed to read CSV: {str(e)}")
+
+
+# --------------------------------------------------
 # Calculations
 # --------------------------------------------------
 try:
@@ -1498,9 +1596,10 @@ st.write(
 
 if st.button("Generate AI Recommendations", type="primary", width="stretch"):
     if not api_key_available:
-        st.error(
-            "Gemini API key not found. Configure GOOGLE_API_KEY or "
-            "GEMINI_API_KEY in Streamlit Secrets or environment variables."
+        st.info(
+            "AI recommendations require a Gemini API key. "
+            "Configure GOOGLE_API_KEY or GEMINI_API_KEY in "
+            "Streamlit Secrets or environment variables to enable."
         )
     else:
         try:
