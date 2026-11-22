@@ -1,6 +1,9 @@
 from io import BytesIO
 import os
+import json
+import hashlib
 from pathlib import Path
+from datetime import datetime
 
 import pandas as pd
 import plotly.express as px
@@ -53,6 +56,276 @@ def get_google_api_key():
 # Do not print or display the API key.
 api_key_available = bool(get_google_api_key())
 
+
+# --------------------------------------------------
+# Authentication (Streamlit session state based)
+# --------------------------------------------------
+
+USERS_KEY = "gba.users.v1"
+SESSION_KEY = "gba.session.v1"
+
+
+def _load_users():
+    try:
+        raw = st.session_state.get(USERS_KEY)
+        if raw:
+            return json.loads(raw)
+    except Exception:
+        pass
+    return {}
+
+
+def _save_users(users):
+    st.session_state[USERS_KEY] = json.dumps(users)
+
+
+def _load_session():
+    try:
+        raw = st.session_state.get(SESSION_KEY)
+        if raw:
+            return json.loads(raw)
+    except Exception:
+        pass
+    return None
+
+
+def _save_session(session):
+    st.session_state[SESSION_KEY] = json.dumps(session)
+
+
+def _clear_session():
+    if SESSION_KEY in st.session_state:
+        del st.session_state[SESSION_KEY]
+
+
+def register_user(email, password, mobile=""):
+    users = _load_users()
+    if email in users:
+        return {"success": False, "error": "User already exists."}
+    users[email] = {
+        "email": email,
+        "password": hashlib.sha256(password.encode()).hexdigest(),
+        "mobile": mobile or "",
+        "created_at": datetime.now().isoformat(),
+        "role": "user",
+    }
+    _save_users(users)
+    return {"success": True}
+
+
+def login_user(email, password):
+    users = _load_users()
+    user = users.get(email)
+    if not user:
+        return {"success": False, "error": "Invalid email or password."}
+    if user["password"] != hashlib.sha256(password.encode()).hexdigest():
+        return {"success": False, "error": "Invalid email or password."}
+    session = {
+        "email": email,
+        "role": user["role"],
+        "logged_in_at": datetime.now().isoformat(),
+    }
+    _save_session(session)
+    return {"success": True, "user": user}
+
+
+def login_with_mobile(mobile, sms_code):
+    if not sms_code or not sms_code.isdigit() or len(sms_code) != 6:
+        return {"success": False, "error": "Invalid SMS code."}
+    users = _load_users()
+    user = next((u for u in users.values() if u.get("mobile") == mobile), None)
+    if not user:
+        return {"success": False, "error": "Mobile not registered."}
+    session = {
+        "email": user["email"],
+        "role": user["role"],
+        "logged_in_at": datetime.now().isoformat(),
+        "mobile": mobile,
+    }
+    _save_session(session)
+    return {"success": True, "user": user}
+
+
+def logout():
+    _clear_session()
+
+
+def is_authenticated():
+    return _load_session() is not None
+
+
+def get_current_user():
+    session = _load_session()
+    if not session:
+        return None
+    users = _load_users()
+    return users.get(session["email"])
+
+
+# --------------------------------------------------
+# Unit Conversion
+# --------------------------------------------------
+
+UNIT_TO_BASE = {
+    "kg": {"to_base": 1, "category": "mass", "base_unit": "kg"},
+    "kilogram": {"to_base": 1, "category": "mass", "base_unit": "kg"},
+    "tonne": {"to_base": 1000, "category": "mass", "base_unit": "kg"},
+    "ton": {"to_base": 1000, "category": "mass", "base_unit": "kg"},
+    "ton (吨)": {"to_base": 1000, "category": "mass", "base_unit": "kg"},
+    "quintal": {"to_base": 100, "category": "mass", "base_unit": "kg"},
+    "jin": {"to_base": 0.5, "category": "mass", "base_unit": "kg"},
+    "jin (斤)": {"to_base": 0.5, "category": "mass", "base_unit": "kg"},
+    "liang": {"to_base": 0.05, "category": "mass", "base_unit": "kg"},
+    "liang (两)": {"to_base": 0.05, "category": "mass", "base_unit": "kg"},
+    "g": {"to_base": 0.001, "category": "mass", "base_unit": "kg"},
+    "gram": {"to_base": 0.001, "category": "mass", "base_unit": "kg"},
+    "lb": {"to_base": 0.453592, "category": "mass", "base_unit": "kg"},
+    "pound": {"to_base": 0.453592, "category": "mass", "base_unit": "kg"},
+    "m3": {"to_base": 1, "category": "volume", "base_unit": "m3"},
+    "m³": {"to_base": 1, "category": "volume", "base_unit": "m3"},
+    "cubic_meter": {"to_base": 1, "category": "volume", "base_unit": "m3"},
+    "liter": {"to_base": 0.001, "category": "volume", "base_unit": "m3"},
+    "litre": {"to_base": 0.001, "category": "volume", "base_unit": "m3"},
+    "ml": {"to_base": 0.000001, "category": "volume", "base_unit": "m3"},
+    "gallon": {"to_base": 0.00378541, "category": "volume", "base_unit": "m3"},
+    "pcs": {"to_base": 1, "category": "count", "base_unit": "pcs"},
+    "piece": {"to_base": 1, "category": "count", "base_unit": "pcs"},
+    "thousand pcs": {"to_base": 1000, "category": "count", "base_unit": "pcs"},
+    "dozen": {"to_base": 12, "category": "count", "base_unit": "pcs"},
+    "bag": {"to_base": 1, "category": "count", "base_unit": "pcs"},
+    "bag (包)": {"to_base": 1, "category": "count", "base_unit": "pcs"},
+    "roll": {"to_base": 1, "category": "count", "base_unit": "pcs"},
+    "bundle": {"to_base": 1, "category": "count", "base_unit": "pcs"},
+}
+
+
+def convert_unit(value, from_unit, to_unit):
+    from_info = UNIT_TO_BASE.get(from_unit)
+    to_info = UNIT_TO_BASE.get(to_unit)
+    if not from_info or not to_info:
+        return None
+    if from_info["category"] != to_info["category"]:
+        return None
+    base_value = value * from_info["to_base"]
+    return base_value / to_info["to_base"]
+
+
+def get_units_by_category(category):
+    return [u for u, info in UNIT_TO_BASE.items() if info["category"] == category]
+
+
+def get_base_unit(unit):
+    info = UNIT_TO_BASE.get(unit)
+    return info["base_unit"] if info else None
+
+
+def is_valid_unit(unit):
+    return unit in UNIT_TO_BASE
+
+
+def get_unit_label(unit):
+    labels = {
+        "kg": "kg",
+        "tonne": "ton (吨)",
+        "ton": "ton (吨)",
+        "ton (吨)": "ton (吨)",
+        "quintal": "quintal",
+        "jin": "jin (斤)",
+        "jin (斤)": "jin (斤)",
+        "liang": "liang (两)",
+        "liang (两)": "liang (两)",
+        "g": "g",
+        "lb": "lb",
+        "m3": "m³",
+        "m³": "m³",
+        "liter": "liter",
+        "pcs": "pcs",
+        "thousand pcs": "1000 pcs",
+        "dozen": "dozen",
+        "bag": "bag (包)",
+        "bag (包)": "bag (包)",
+    }
+    return labels.get(unit, unit)
+
+
+# --------------------------------------------------
+# Project Storage (per-user)
+# --------------------------------------------------
+
+PROJECTS_KEY_PREFIX = "gba.projects.v1."
+
+
+def _user_projects_key(email):
+    return f"{PROJECTS_KEY_PREFIX}{email}"
+
+
+def _load_user_projects(email):
+    try:
+        raw = st.session_state.get(_user_projects_key(email))
+        if raw:
+            return json.loads(raw)
+    except Exception:
+        pass
+    return {}
+
+
+def _save_user_projects(email, projects):
+    st.session_state[_user_projects_key(email)] = json.dumps(projects)
+
+
+def save_project(name):
+    if not is_authenticated():
+        raise Exception("Authentication required. Please sign in to save projects.")
+    user = get_current_user()
+    projects = _load_user_projects(user["email"])
+    projects[name] = {
+        "quantities": st.session_state.get("material_quantities", {}),
+        "unit_costs": st.session_state.get("material_unit_costs", {}),
+        "material_units": st.session_state.get("material_units", {}),
+        "lca": st.session_state.get("lca_inputs", {}),
+        "project": st.session_state.get("project_details", {}),
+        "saved_at": datetime.now().isoformat(),
+        "owner": user["email"],
+    }
+    _save_user_projects(user["email"], projects)
+    return projects
+
+
+def list_projects():
+    if not is_authenticated():
+        return []
+    user = get_current_user()
+    return list(_load_user_projects(user["email"]).keys())
+
+
+def load_project(name):
+    if not is_authenticated():
+        raise Exception("Authentication required. Please sign in to load projects.")
+    user = get_current_user()
+    projects = _load_user_projects(user["email"])
+    saved = projects.get(name)
+    if not saved:
+        return False
+    st.session_state["material_quantities"] = saved.get("quantities", {})
+    st.session_state["material_unit_costs"] = saved.get("unit_costs", {})
+    st.session_state["material_units"] = saved.get("material_units", {})
+    st.session_state["lca_inputs"] = saved.get("lca", {})
+    st.session_state["project_details"] = saved.get("project", {})
+    return True
+
+
+def delete_project(name):
+    if not is_authenticated():
+        raise Exception("Authentication required. Please sign in to delete projects.")
+    user = get_current_user()
+    projects = _load_user_projects(user["email"])
+    if name in projects:
+        del projects[name]
+    _save_user_projects(user["email"], projects)
+    return projects
+
+
+# --------------------------------------------------
 
 @st.cache_data(ttl="15m", max_entries=30)
 def get_cached_ai_recommendations(
@@ -642,31 +915,71 @@ st.sidebar.info(
 rows = []
 for _, item in materials_df.iterrows():
     material_name = str(item["material"])
-    unit = str(item["unit"])
+    base_unit = str(item["unit"])
 
     with st.sidebar.expander(material_name, expanded=True):
+        # Unit selection
+        base_unit_display = get_unit_label(base_unit)
+        available_units = get_units_by_category(
+            get_base_unit(base_unit) or "mass"
+        )
+        unit_options = [base_unit] + [
+            u for u in available_units if u != base_unit
+        ][:5]
+
+        current_unit = st.session_state.get(
+            f"material_unit_{material_name}", base_unit
+        )
+        if current_unit not in unit_options:
+            current_unit = base_unit
+
+        selected_unit = st.selectbox(
+            "Unit",
+            options=unit_options,
+            index=unit_options.index(current_unit),
+            key=f"unit_select_{material_name}",
+        )
+
+        # Convert stored quantity if unit changed
+        stored_qty = st.session_state.get(
+            f"material_qty_{material_name}", 100.0
+        )
+        if selected_unit != current_unit and is_valid_unit(selected_unit) and is_valid_unit(current_unit):
+            converted_qty = convert_unit(stored_qty, current_unit, selected_unit)
+            if converted_qty is not None:
+                stored_qty = converted_qty
+
+        st.session_state[f"material_unit_{material_name}"] = selected_unit
+        st.session_state[f"material_qty_{material_name}"] = stored_qty
+
         quantity = st.number_input(
-            f"Quantity ({unit})",
+            f"Quantity ({get_unit_label(selected_unit)})",
             min_value=0.0,
-            value=100.0,
+            value=float(stored_qty),
             step=10.0,
             key=f"quantity_{material_name}",
         )
         unit_cost = st.number_input(
-            f"Cost per {unit} (INR)",
+            f"Cost per {get_unit_label(selected_unit)} (INR)",
             min_value=0.0,
             value=float(item["unit_cost"]),
             step=0.1,
             key=f"cost_{material_name}",
         )
 
+    # Convert quantity to base unit for calculation
+    calc_qty = quantity
+    if selected_unit != base_unit and is_valid_unit(selected_unit) and is_valid_unit(base_unit):
+        calc_qty = convert_unit(quantity, selected_unit, base_unit) or quantity
+
     rows.append(
         {
             "material": material_name,
-            "quantity": quantity,
+            "quantity": calc_qty,
             "unit_cost": unit_cost,
             "emission_factor": float(item["emission_factor"]),
-            "unit": unit,
+            "unit": base_unit,
+            "display_unit": selected_unit,
         }
     )
 
@@ -743,6 +1056,116 @@ with st.sidebar.expander("End-of-life estimate", expanded=False):
 
 
 # --------------------------------------------------
+# Authentication (Sidebar)
+# --------------------------------------------------
+st.sidebar.divider()
+st.sidebar.subheader("🔐 Account")
+
+if is_authenticated():
+    user = get_current_user()
+    st.sidebar.success(f"Signed in as: {user['email']}")
+    if st.sidebar.button("Sign out", key="sidebar_signout", use_container_width=True):
+        logout()
+        st.rerun()
+else:
+    auth_tab = st.sidebar.radio(
+        "Auth",
+        options=["Sign in", "Register"],
+        key="auth_tab",
+        horizontal=True,
+    )
+
+    if auth_tab == "Register":
+        reg_email = st.sidebar.text_input("Email", key="reg_email")
+        reg_password = st.sidebar.text_input("Password", type="password", key="reg_password")
+        reg_mobile = st.sidebar.text_input("Mobile (optional)", key="reg_mobile")
+        if st.sidebar.button("Create account", key="btn_register", use_container_width=True):
+            if reg_email and reg_password:
+                result = register_user(reg_email, reg_password, reg_mobile)
+                if result["success"]:
+                    st.sidebar.success("Account created! Please sign in.")
+                else:
+                    st.sidebar.error(result["error"])
+            else:
+                st.sidebar.error("Please enter email and password.")
+    else:
+        login_email = st.sidebar.text_input("Email", key="login_email")
+        login_password = st.sidebar.text_input("Password", type="password", key="login_password")
+        login_mobile = st.sidebar.text_input("Mobile (for SMS login)", key="login_mobile")
+        sms_code = st.sidebar.text_input("SMS Code (6 digits)", key="sms_code", max_chars=6)
+
+        col_login, col_mobile = st.sidebar.columns(2)
+        with col_login:
+            if st.button("Sign in", key="btn_login", use_container_width=True):
+                if login_email and login_password:
+                    result = login_user(login_email, login_password)
+                    if result["success"]:
+                        st.sidebar.success("Signed in successfully!")
+                        st.rerun()
+                    else:
+                        st.sidebar.error(result["error"])
+                else:
+                    st.sidebar.error("Please enter email and password.")
+        with col_mobile:
+            if st.button("SMS Login", key="btn_mobile_login", use_container_width=True):
+                if login_mobile and sms_code:
+                    result = login_with_mobile(login_mobile, sms_code)
+                    if result["success"]:
+                        st.sidebar.success("Signed in with mobile!")
+                        st.rerun()
+                    else:
+                        st.sidebar.error(result["error"])
+                else:
+                    st.sidebar.error("Please enter mobile and SMS code.")
+
+
+# --------------------------------------------------
+# Project Save/Load (Authenticated users only)
+# --------------------------------------------------
+st.sidebar.divider()
+st.sidebar.subheader("💾 Projects")
+
+if is_authenticated():
+    proj_col1, proj_col2 = st.sidebar.columns(2)
+    with proj_col1:
+        proj_name = st.text_input("Project name", key="proj_name_input", placeholder="e.g. My Building")
+        if st.button("Save", key="btn_save_project", use_container_width=True):
+            if proj_name:
+                try:
+                    save_project(proj_name)
+                    st.sidebar.success(f"Saved '{proj_name}'")
+                except Exception as e:
+                    st.sidebar.error(str(e))
+            else:
+                st.sidebar.error("Enter project name.")
+    with proj_col2:
+        saved_projects = list_projects()
+        if saved_projects:
+            selected_proj = st.selectbox(
+                "Load project",
+                options=[""] + saved_projects,
+                key="proj_load_select",
+            )
+            if selected_proj and st.button("Load", key="btn_load_project", use_container_width=True):
+                if load_project(selected_proj):
+                    st.sidebar.success(f"Loaded '{selected_proj}'")
+                    st.rerun()
+                else:
+                    st.sidebar.error("Project not found.")
+            if st.button("Delete", key="btn_delete_project", use_container_width=True):
+                if selected_proj:
+                    delete_project(selected_proj)
+                    st.sidebar.success(f"Deleted '{selected_proj}'")
+                    st.rerun()
+                else:
+                    st.sidebar.error("Select a project to delete.")
+        else:
+            st.sidebar.info("No saved projects.")
+else:
+    st.sidebar.info("Sign in to save/load projects.")
+
+
+# --------------------------------------------------
 # Calculations
 # --------------------------------------------------
 try:
@@ -785,6 +1208,49 @@ total_lifecycle_carbon = lca_result["total_lifecycle_carbon_kg"]
 if "ai_recommendations_text" not in st.session_state:
     st.session_state["ai_recommendations_text"] = ""
 
+
+# --------------------------------------------------
+# Unit Converter Panel
+# --------------------------------------------------
+st.divider()
+st.subheader("🧮 Unit Converter")
+conv_col1, conv_col2, conv_col3 = st.columns([1, 1, 1])
+
+with conv_col1:
+    conv_value = st.number_input("Value", min_value=0.0, value=1.0, step=1.0, key="conv_value")
+
+with conv_col2:
+    conv_from = st.selectbox(
+        "From",
+        options=list(UNIT_TO_BASE.keys()),
+        index=0,
+        key="conv_from",
+    )
+
+with conv_col3:
+    conv_to = st.selectbox(
+        "To",
+        options=list(UNIT_TO_BASE.keys()),
+        index=0,
+        key="conv_to",
+    )
+
+conv_result = None
+conv_formula = ""
+if conv_value > 0:
+    conv_result = convert_unit(conv_value, conv_from, conv_to)
+    if conv_result is not None:
+        conv_formula = (
+            f"{conv_value:,.4f} {get_unit_label(conv_from)} = "
+            f"{conv_result:,.4f} {get_unit_label(conv_to)}"
+        )
+    else:
+        conv_formula = "Incompatible units"
+
+if conv_result is not None:
+    st.success(conv_formula)
+else:
+    st.info("Enter a value to convert between units.")
 
 # --------------------------------------------------
 # KPI Dashboard
