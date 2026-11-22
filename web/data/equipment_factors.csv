@@ -1,0 +1,7 @@
+equipment_id,name,gwp_cf,gwp_unit,energy_cf,energy_unit,boundary,geography,verification_status,source_tables
+EQ-001,Concrete mixer 0.25-0.40 cum,1.9795,kg CO2e/hour,106.4,MJ/hour,Use-stage,India,Needs-review,"S3,S6"
+EQ-002,Hydraulic excavator 3D,25.3183,kg CO2e/hour,345.83,MJ/hour,Use-stage,India,Needs-review,"S3,S6"
+EQ-003,Loader,35.915,kg CO2e/hour,390.17,MJ/hour,Use-stage,India,Needs-review,"S3,S6"
+EQ-004,Mobile crane,58.777,kg CO2e/hour,638.46,MJ/hour,Use-stage,India,Needs-review,"S3,S6"
+EQ-005,Welding by electric plant,0.0019,kg CO2e/cm,0.02,MJ/cm,Use-stage,India,Verified-source-linked,S3
+EQ-006,Diesel,3.265,kg CO2e/litre,35.47,MJ/litre,Combustion/use,India,Verified-source-linked,S3
