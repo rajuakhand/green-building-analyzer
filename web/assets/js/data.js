@@ -84,13 +84,19 @@ function normaliseMaterial(row) {
 }
 
 function normaliseFactor(row) {
+  const gwpUnit = row.gwp_unit;
+  const quantityUnit = gwpUnit.includes("/")
+    ? gwpUnit.split("/", 1)[1].trim()
+    : gwpUnit.trim();
+
   return {
     id: row.material_id,
     category: row.broad_category,
     broadCategory: row.broad_category,
     name: row.material,
     gwpFactor: Number(row.gwp_cf),
-    gwpUnit: row.gwp_unit,
+    gwpUnit,
+    quantityUnit,
     energyFactor: Number(row.energy_cf),
     energyUnit: row.energy_unit,
     boundary: row.boundary,

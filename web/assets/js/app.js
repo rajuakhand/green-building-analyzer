@@ -16,18 +16,28 @@ import {
   set,
   subscribe,
   toggleFactor,
+  saveProject,
+  loadProject,
+  deleteProject,
+  listProjects,
+  toggleTheme,
+  setMaterials,
+  setMaterialUnit,
 } from "./store.js";
+import { convertUnit, isValidUnit } from "./units.js";
 
 import * as aiView from "./views/ai.js";
 import * as calculatorView from "./views/calculator.js";
 import * as catalogueView from "./views/catalogue.js";
 import * as estimateView from "./views/estimate.js";
 import * as exportView from "./views/export.js";
+import * as importView from "./views/import.js";
 import * as lcaView from "./views/lca.js";
 import * as methodView from "./views/method.js";
 import * as sourcesView from "./views/sources.js";
 import * as compareView from "./views/compare.js";
 import * as statementView from "./views/statement.js";
+import { isAuthenticated, logout, getCurrentUser, loginUser } from "./auth.js";
 
 const VIEWS = {
   estimate: estimateView,
@@ -40,6 +50,7 @@ const VIEWS = {
   compare: compareView,
   statement: statementView,
   export: exportView,
+  import: importView,
 };
 
 const appEl = document.getElementById("app");
@@ -53,15 +64,26 @@ function buildContext() {
   const state = getState();
 
   const rows = calculateFootprint(
-    data.materials.map((material) => ({
-      name: material.name,
-      unit: material.unit,
-      quantity: state.quantities[material.name] ?? 0,
-      unitCost: state.unitCosts[material.name] ?? 0,
-      emissionFactor: material.emissionFactor,
-      verificationStatus: material.verificationStatus,
-      source: material.source,
-    }))
+    state.materials.map((material) => {
+      const displayQty = state.quantities[material.name] ?? 0;
+      const displayUnit = state.materialUnits[material.name] || material.unit;
+
+      // Convert from display unit to base unit for calculation
+      let calcQty = displayQty;
+      if (displayUnit !== material.unit && isValidUnit(displayUnit) && isValidUnit(material.unit)) {
+        calcQty = convertUnit(displayQty, displayUnit, material.unit) ?? displayQty;
+      }
+
+      return ({
+        name: material.name,
+        unit: material.unit,
+        quantity: calcQty,
+        unitCost: state.unitCosts[material.name] ?? 0,
+        emissionFactor: material.emissionFactor,
+        verificationStatus: material.verificationStatus,
+        source: material.source,
+      })
+    })
   );
 
   const summary = summariseFootprint(rows);
@@ -123,6 +145,27 @@ function handleInput(event) {
         state.quantities[el.dataset.material] = readNumber(el.value);
       });
       break;
+    case "material-unit": {
+      const materialName = el.dataset.material;
+      const newUnit = el.value;
+      const state = getState();
+      const currentQty = state.quantities[materialName] ?? 0;
+      const matDef = data.materials.find((m) => m.name === materialName);
+      const baseUnit = matDef?.unit || "kg";
+
+      // Convert existing quantity from current unit to new unit
+      const currentUnit = state.materialUnits[materialName] || baseUnit;
+      let convertedQty = currentQty;
+      if (currentUnit !== newUnit && isValidUnit(currentUnit) && isValidUnit(newUnit)) {
+        convertedQty = convertUnit(currentQty, currentUnit, newUnit) ?? currentQty;
+      }
+
+      set((draft) => {
+        draft.materialUnits[materialName] = newUnit;
+        draft.quantities[materialName] = convertedQty;
+      });
+      break;
+    }
     case "material-cost":
       set((state) => {
         state.unitCosts[el.dataset.material] = readNumber(el.value);
@@ -201,8 +244,52 @@ function handleClick(event) {
         state.aiRequested = true;
       });
       return;
-    default:
-      break;
+    case "save-project": {
+      const name = prompt("প্রজেক্টের নাম লিখুন (Save project as):");
+      if (name) {
+        saveProject(name);
+        renderView({ preserveFocus: false });
+      }
+      return;
+    }
+    case "load-project": {
+      const name = prompt("প্রজেক্টের নাম লিখুন যাতে লোড করতে হবে:");
+      if (name && loadProject(name)) {
+        renderView({ preserveFocus: false });
+      }
+      return;
+    }
+    case "delete-project": {
+      const name = prompt("কোন প্রজেক্ট ডিলিট করতে চান:");
+      if (name) {
+        deleteProject(name);
+        renderView({ preserveFocus: false });
+      }
+      return;
+    }
+    case "toggle-theme":
+      toggleTheme();
+      return;
+    case "auth-toggle": {
+      if (isAuthenticated()) {
+        logout();
+        renderView({ preserveFocus: false });
+      } else {
+        const email = prompt("ইমেইল ঠিকানা লিখুন:");
+        const password = prompt("পাসওয়ার্ড লিখুন:");
+        const mobile = prompt("মোবাইল নম্বর (ঐচ্ছিক, চীন-ভিত্তিক লগ인의 জন্য):");
+        if (email && password) {
+          const result = loginUser(email, password);
+          if (result.success) {
+            alert("সফলভাবে লগইন করা হয়েছে।");
+            renderView({ preserveFocus: false });
+          } else {
+            alert(result.error);
+          }
+        }
+      }
+      return;
+    }
   }
 
   const ctx = buildContext();
@@ -218,6 +305,18 @@ function handleClick(event) {
 function routeFromHash() {
   const match = window.location.hash.match(/^#\/([a-z]+)/);
   return match && VIEWS[match[1]] ? match[1] : "estimate";
+}
+
+function updateAuthButton() {
+  const btn = document.querySelector('[data-action="auth-toggle"]');
+  if (!btn) return;
+  const textSpan = btn.querySelector(".auth-text");
+  if (isAuthenticated()) {
+    const user = getCurrentUser();
+    btn.innerHTML = `<i class="ti ti-logout" aria-hidden="true"></i><span class="auth-text">Sign out (${user ? user.email : ""})</span>`;
+  } else {
+    btn.innerHTML = `<i class="ti ti-user" aria-hidden="true"></i><span class="auth-text">Sign in</span>`;
+  }
 }
 
 /* --------------------------------------------------------------------- boot */
@@ -255,15 +354,26 @@ async function main() {
 
   initialiseMaterials(data.materials);
 
+  // Seed the master material list into state for dynamic import support.
+  set((s) => {
+    s.materials = data.materials;
+  });
+
   if (!getState().catalogue.inspectedId) {
     set((state) => {
       state.catalogue.inspectedId = data.factors[0].id;
     });
   }
 
-  subscribe(() => renderView());
+  subscribe(() => {
+    document.documentElement.setAttribute("data-theme", getState().theme);
+    updateAuthButton();
+    renderView();
+  });
 
   currentRoute = routeFromHash();
+  document.documentElement.setAttribute("data-theme", getState().theme);
+  updateAuthButton();
   renderView({ preserveFocus: false });
 
   window.addEventListener("hashchange", () => {

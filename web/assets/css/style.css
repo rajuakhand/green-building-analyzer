@@ -45,7 +45,7 @@
   --text-lg: 15px;
   --text-xl: 20px;
 
-  /* Radii */
+/* Radii */
   --radius-xs: 5px;
   --radius-sm: 7px;
   --radius-md: 8px;
@@ -59,6 +59,39 @@
   --sidebar-w: 240px;
   --pad-page: 24px;
   --gap-block: 16px;
+}
+
+/* Dark mode theme overrides */
+
+[data-theme="dark"] {
+  /* Ink */
+  --ink: #e8f5f0;
+  --ink-active: #ffffff;
+  --muted: #a3b8b0;
+  --faint: #8a9e96;
+  --placeholder: #6b7a72;
+
+  /* Surfaces */
+  --surface: #0d1b1a;
+  --surface-2: #142725;
+  --surface-3: #1b3430;
+  --track: #253d39;
+  --border: #2d4a46;
+  --hairline: #223834;
+  --border-strong: #3d5c57;
+
+  /* Action */
+  --green: #2ecc71;
+  --green-hover: #27ae60;
+
+  /* Status: data quality */
+  --warn-bg: #2d2610;
+  --warn-border: #5c4a14;
+  --warn-text: #e7d9b4;
+  --warn-ink: #f4e39c;
+
+  /* Deltas: an increase is unfavourable in both carbon and cost */
+  --up: #e74c3c;
 }
 
 /* ==========================================================================
@@ -279,6 +312,35 @@ sub {
   font-size: var(--text-xs);
   line-height: 1.55;
   color: var(--muted);
+}
+
+/* Project tools in sidebar footer */
+
+.project-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.project-tools .btn {
+  width: 100%;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Auth tools in sidebar footer */
+
+.auth-tools {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.auth-tools .btn {
+  width: 100%;
+  justify-content: center;
+  gap: 6px;
 }
 
 .main {
@@ -1622,8 +1684,94 @@ sub {
 }
 
 /* ==========================================================================
-   Prose, formulas and counts (method and provenance views)
+   Export tools (print settings panel)
    ========================================================================== */
+
+.export-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.export-tools__title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.export-tools__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.export-tools__controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.export-tools__controls input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green);
+}
+
+/* ==========================================================================
+   Print — used by the PDF report action
+   ========================================================================== */
+
+@media print {
+  .sidebar,
+  .page-actions,
+  .btn,
+  .selected-bar,
+  .statement-form,
+  .notice,
+  .export-tools {
+    display: none !important;
+  }
+
+  .statement-print-head {
+    display: block !important;
+    margin-bottom: 16px;
+  }
+
+  .table-scroll {
+    overflow: visible;
+  }
+
+  .app {
+    display: block;
+  }
+
+  .main {
+    padding: 0;
+  }
+
+  .panel,
+  .metric,
+  .total-card,
+  .breakdown,
+  .footer-note,
+  .notice {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  .bench,
+  .bench--catalogue,
+  .bench--lca {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 
 .prose {
   display: flex;

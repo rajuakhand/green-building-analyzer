@@ -144,4 +144,47 @@ check("negative quantities cannot reduce a total", () => {
   assert.equal(negative[0].carbon, 0);
 });
 
+check("negative and invalid life-cycle inputs cannot create negative totals", () => {
+  const lca = calculateLca({
+    embodiedCarbon: 10,
+    lca: {
+      transportTonnes: -20,
+      transportDistanceKm: "invalid",
+      transportFactor: -1,
+      annualEnergyKwh: -5,
+      lifetimeYears: -50,
+      electricityFactor: -0.7,
+      endOfLifeKg: -100,
+    },
+  });
+  close(lca.total, 10);
+});
+
+check("invalid research factors are rejected", () => {
+  assert.throws(
+    () => calculateResearchRows([
+      { id: "MAT-X", name: "Invalid", quantity: 1, gwpFactor: Number.NaN, energyFactor: 10 },
+    ]),
+    /Invalid GWP factor/
+  );
+});
+
+check("research quantity units must match factor denominators", () => {
+  assert.throws(
+    () => calculateResearchRows([
+      {
+        id: "MAT-X",
+        name: "Mismatch",
+        quantity: 1,
+        quantityUnit: "kg",
+        gwpFactor: 1,
+        gwpUnit: "kg CO2e/tonne",
+        energyFactor: 1,
+        energyUnit: "MJ/tonne",
+      },
+    ]),
+    /GWP unit mismatch/
+  );
+});
+
 console.log(`\n${passed} checks passed`);

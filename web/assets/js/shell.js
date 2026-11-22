@@ -1,4 +1,5 @@
 import { formatInput, formatNumber } from "./format.js";
+import { isAuthenticated, logout } from "./auth.js";
 
 /** Navigation is the product's six real destinations, in a fixed order. */
 export const NAV = [
@@ -12,6 +13,7 @@ export const NAV = [
   { route: "compare", label: "Compare scenarios", icon: "ti-columns-2" },
   { route: "statement", label: "Project statement", icon: "ti-file-invoice" },
   { route: "export", label: "Export", icon: "ti-download" },
+  { route: "import", label: "Import", icon: "ti-file-import" },
 ];
 
 export function shellHtml() {
@@ -32,6 +34,25 @@ export function shellHtml() {
       </nav>
       <div class="sidebar__foot">
         <p>AI-assisted estimates for educational and preliminary planning. Not a certified life-cycle assessment.</p>
+        <div class="project-tools">
+          <button class="btn btn--primary btn--block" type="button" data-action="save-project">
+            <i class="ti ti-save" aria-hidden="true"></i>Project.save
+          </button>
+          <button class="btn btn--outline btn--block" type="button" data-action="load-project">
+            <i class="ti ti-folder-open" aria-hidden="true"></i>Project.load
+          </button>
+          <button class="btn btn--outline btn--block" type="button" data-action="delete-project">
+            <i class="ti ti-trash" aria-hidden="true"></i>Project.delete
+          </button>
+          <button class="btn btn--outline btn--block" type="button" data-action="toggle-theme">
+            <i class="ti ti-sun" aria-hidden="true"></i>Theme.toggle
+          </button>
+        </div>
+        <div class="auth-tools" style="margin-top: 12px;">
+          <button class="btn btn--outline btn--block" type="button" data-action="auth-toggle">
+            <i class="ti ti-user" aria-hidden="true"></i><span class="auth-text">Sign in</span>
+          </button>
+        </div>
       </div>
     </aside>
     <main class="main" id="view" tabindex="-1"></main>

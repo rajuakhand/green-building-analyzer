@@ -7,11 +7,16 @@ import plotly.express as px
 import streamlit as st
 from fpdf import FPDF
 
-from src.calculator import calculate_footprint, summarize_footprint
+from src.calculator import (
+    calculate_footprint,
+    summarize_footprint,
+    calculate_research_footprint,
+    summarize_research_footprint,
+)
 from src.advanced_lca import calculate_lca
 from src.ai_engine import get_ai_recommendations
 from src.material_data import validate_materials
-
+from src.material_data import load_material_factors
 # --------------------------------------------------
 # Page Configuration
 # --------------------------------------------------
@@ -47,6 +52,22 @@ def get_google_api_key():
 
 # Do not print or display the API key.
 api_key_available = bool(get_google_api_key())
+
+
+@st.cache_data(ttl="15m", max_entries=30)
+def get_cached_ai_recommendations(
+    materials_df,
+    total_carbon,
+    total_cost,
+    api_key,
+):
+    """Reuse identical recent AI reports and avoid unnecessary API calls."""
+    return get_ai_recommendations(
+        materials=materials_df,
+        total_carbon_kg=total_carbon,
+        total_cost=total_cost,
+        api_key=api_key,
+    )
 
 
 # --------------------------------------------------
@@ -346,28 +367,30 @@ try:
     materials_df = validate_materials(materials_df)
 
     warning_mask = pd.Series(False, index=materials_df.index)
+
     for column in ["source", "verification_status"]:
-       if column in materials_df.columns:
-          warning_mask |= materials_df[column].astype("string").str.contains(
-            r"demo|not verified|unverified|illustrative|needs.review",
-            case=False,
-            na=False,
+        if column in materials_df.columns:
+            warning_mask |= materials_df[column].astype("string").str.contains(
+                r"demo|not verified|unverified|illustrative|needs.review",
+                case=False,
+                na=False,
+            )
+
+    if warning_mask.any():
+        demo_materials = ", ".join(
+            materials_df.loc[warning_mask, "material"].astype(str)
         )
 
-        if warning_mask.any():
-           demo_materials = ", ".join(
-             materials_df.loc[warning_mask, "material"].astype(str)
-           )
-            st.warning(
-                "Research data-quality notice: One or more material emission "
-                "factors are illustrative or have not been independently verified. "
-                f"Affected material(s): {demo_materials}. Results involving these "
-                "factors must not be interpreted as validated environmental "
-                "impact estimates or used to support comparative research claims. "
-                "Verify the factor against a traceable source, including its "
-                "functional unit, system boundary, material specification, "
-                "geographical scope, and reference year before publication."
-            )
+        st.warning(
+            "Research data-quality notice: One or more material emission "
+            "factors are illustrative or have not been independently verified. "
+            f"Affected material(s): {demo_materials}. Results involving these "
+            "factors must not be interpreted as validated environmental "
+            "impact estimates or used to support comparative research claims. "
+            "Verify the factor against a traceable source, including its "
+            "functional unit, system boundary, material specification, "
+            "geographical scope, and reference year before publication."
+        )
 except FileNotFoundError:
     st.error("Material data file not found: data/materials.csv")
     st.stop()
@@ -375,7 +398,237 @@ except (ValueError, pd.errors.ParserError) as error:
     st.error(f"Unable to load material data: {error}")
     st.stop()
 
+# --------------------------------------------------
+# Research Material Factor Catalogue
+# --------------------------------------------------
+RESEARCH_FACTORS_FILE = (
+    Path(__file__).resolve().parent / "data" / "material_factors.csv"
+)
 
+research_factors_df = None
+
+try:
+    research_factors_df = load_material_factors(RESEARCH_FACTORS_FILE)
+
+    st.subheader("🔬 Research Material Factor Catalogue")
+    st.caption(
+        "Browse the 78 construction-material characterization factors extracted "
+        "from Chaudhary & Akhtar (2023), Supporting Information Table S3. "
+        "These material factors are cradle-to-gate and are separate from the "
+        "existing demo pricing dataset."
+    )
+
+    search_text = st.text_input(
+        "Search research materials",
+        placeholder="Example: cement, brick, steel, sand",
+        key="research_material_search",
+    )
+
+    searchable = research_factors_df[
+        ["material_id", "broad_category", "material"]
+    ].astype("string")
+
+    if search_text.strip():
+        mask = searchable.apply(
+            lambda column: column.str.contains(
+                search_text.strip(), case=False, na=False
+            )
+        ).any(axis=1)
+        filtered_factors = research_factors_df[mask]
+    else:
+        filtered_factors = research_factors_df
+
+    if filtered_factors.empty:
+        st.warning("No research material matched your search.")
+    else:
+        selected_label = st.selectbox(
+            "Select a research material",
+            options=[
+                f"{row.material_id} — {row.material}"
+                for row in filtered_factors.itertuples(index=False)
+            ],
+            key="research_material_select",
+        )
+
+        selected_id = selected_label.split(" — ", 1)[0]
+        selected_factor = research_factors_df[
+            research_factors_df["material_id"] == selected_id
+        ].iloc[0]
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric("GWP Factor", f"{selected_factor['gwp_cf']:,.4f}")
+        col2.metric("Energy Factor", f"{selected_factor['energy_cf']:,.4f}")
+        col3.metric("Boundary", str(selected_factor["boundary"]))
+
+        st.dataframe(
+            selected_factor.to_frame("Value"),
+            width="stretch",
+        )
+
+        if str(selected_factor["verification_status"]) == "Needs-review":
+            st.warning(
+                "This record is marked Needs-review. Do not treat its factors "
+                "as fully verified without checking the original source."
+            )
+
+except FileNotFoundError:
+    st.error("Research material factor file not found: data/material_factors.csv")
+except (ValueError, pd.errors.ParserError) as error:
+    st.error(f"Unable to load research material factors: {error}")
+# --------------------------------------------------
+# Research Material Calculator
+# --------------------------------------------------
+
+if research_factors_df is not None:
+
+    st.divider()
+    st.header("🧮 Research Material Calculator")
+
+    st.caption(
+        "Calculate GWP and energy using the 78 research material factors "
+        "from Chaudhary & Akhtar (2023), Supporting Information Table S3. "
+        "These results use the factor's stated cradle-to-gate boundary."
+    )
+
+    research_labels = [
+        f"{row.material_id} — {row.material}"
+        for row in research_factors_df.itertuples(index=False)
+    ]
+
+    selected_research_labels = st.multiselect(
+        "Select research materials to calculate",
+        options=research_labels,
+        key="research_calculator_materials",
+    )
+
+    research_rows = []
+
+    if selected_research_labels:
+
+        selected_ids = [
+            label.split(" — ", 1)[0]
+            for label in selected_research_labels
+        ]
+
+        st.subheader("Enter Material Quantities")
+
+        for material_id in selected_ids:
+
+            factor = research_factors_df[
+                research_factors_df["material_id"] == material_id
+            ].iloc[0]
+
+            material_name = str(factor["material"])
+            gwp_unit = str(factor["gwp_unit"]).strip()
+            energy_unit = str(factor["energy_unit"]).strip()
+
+            quantity_unit = (
+                gwp_unit.split("/", 1)[1].strip()
+                if "/" in gwp_unit
+                else gwp_unit
+            )
+
+            st.markdown(f"**{material_id} — {material_name}**")
+
+            st.caption(
+                f"GWP: {gwp_unit} | Energy: {energy_unit}"
+            )
+
+            quantity = st.number_input(
+                f"Quantity ({quantity_unit})",
+                min_value=0.0,
+                value=0.0,
+                step=1.0,
+                key=f"research_quantity_{material_id}",
+            )
+
+            research_rows.append({
+                "material_id": material_id,
+                "material": material_name,
+                "quantity": quantity,
+                "quantity_unit": quantity_unit,
+                "gwp_cf": factor["gwp_cf"],
+                "gwp_unit": gwp_unit,
+                "energy_cf": factor["energy_cf"],
+                "energy_unit": energy_unit,
+                "boundary": factor["boundary"],
+                "geography": factor["geography"],
+                "verification_status": factor["verification_status"],
+            })
+
+        try:
+            research_input_df = pd.DataFrame(research_rows)
+
+            research_result_df = calculate_research_footprint(
+                research_input_df
+            )
+
+            research_summary = summarize_research_footprint(
+                research_result_df
+            )
+
+            st.subheader("Research Calculation Results")
+
+            col1, col2 = st.columns(2)
+
+            col1.metric(
+                "Total GWP",
+                f"{research_summary['total_carbon_kg_co2e']:,.2f} kg CO2e",
+            )
+
+            col2.metric(
+                "Total Energy",
+                f"{research_summary['total_energy_mj']:,.2f} MJ",
+            )
+
+            st.caption(
+                f"Boundary: {research_summary['boundary']} | "
+                f"Geography: {research_summary['geography']}"
+            )
+
+            st.dataframe(
+                research_result_df[
+                    [
+                        "material_id",
+                        "material",
+                        "quantity",
+                        "quantity_unit",
+                        "gwp_cf",
+                        "gwp_unit",
+                        "carbon_kg_co2e",
+                        "energy_cf",
+                        "energy_unit",
+                        "energy_mj",
+                        "verification_status",
+                    ]
+                ],
+                width="stretch",
+            )
+
+            needs_review = research_result_df[
+                research_result_df["verification_status"] == "Needs-review"
+            ]
+
+            if not needs_review.empty:
+                st.warning(
+                    "One or more selected factors are marked Needs-review. "
+                    "Check the original source before treating these results "
+                    "as verified."
+                )
+
+            st.info(
+                "This Research Calculator reports only the selected "
+                "material factors within their stated boundary. "
+                "It does not automatically add transport, onsite "
+                "construction, operational or end-of-life impacts."
+            )
+
+        except (ValueError, KeyError) as error:
+            st.error(f"Research calculation failed: {error}")
+
+    else:
+        st.info("Select one or more research materials to begin.")
 # --------------------------------------------------
 # Sidebar Inputs
 # --------------------------------------------------
@@ -584,11 +837,11 @@ lca_fig.update_layout(
     showlegend=False,
     margin=dict(l=20, r=30, t=60, b=20),
 )
-st.plotly_chart(lca_fig, use_container_width=True)
+st.plotly_chart(lca_fig, width="stretch")
 
 st.dataframe(
     lca_breakdown_df.style.format({"Carbon (kg CO2e)": "{:,.2f}"}),
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
 )
 st.divider()
@@ -619,7 +872,7 @@ fig.update_layout(
     yaxis_title="Carbon (kg CO₂e)",
     xaxis_title="Material",
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 
 
 # --------------------------------------------------
@@ -650,7 +903,7 @@ st.dataframe(
             "Carbon Share (%)": "{:.2f}%",
         }
     ),
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
 )
 
@@ -691,7 +944,7 @@ st.dataframe(
             "Carbon (kg CO₂e)": "{:,.2f}",
         }
     ),
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
 )
 
@@ -777,7 +1030,7 @@ st.write(
     "cost optimization, and data limitations."
 )
 
-if st.button("Generate AI Recommendations", type="primary", use_container_width=True):
+if st.button("Generate AI Recommendations", type="primary", width="stretch"):
     if not api_key_available:
         st.error(
             "Gemini API key not found. Configure GOOGLE_API_KEY or "
@@ -786,10 +1039,11 @@ if st.button("Generate AI Recommendations", type="primary", use_container_width=
     else:
         try:
             with st.spinner("Analyzing material data with Gemini AI..."):
-                recommendations = get_ai_recommendations(
-                    materials=df,
-                    total_carbon_kg=total_carbon,
-                    total_cost=total_cost,
+                recommendations = get_cached_ai_recommendations(
+                    df,
+                    total_carbon,
+                    total_cost,
+                    get_google_api_key(),
                 )
             st.session_state["ai_recommendations_text"] = str(recommendations or "")
         except Exception as error:

@@ -1,5 +1,5 @@
 import math
-
+from pathlib import Path
 import pandas as pd
 
 
@@ -59,3 +59,56 @@ def validate_materials(materials: pd.DataFrame) -> pd.DataFrame:
             raise ValueError(f"{column} cannot contain negative values.")
 
     return result
+def load_material_factors(path: str | Path) -> pd.DataFrame:
+    """Load and perform structural validation for the research material-factor catalogue."""
+    required_columns = {
+        "material_id",
+        "broad_category",
+        "material",
+        "gwp_cf",
+        "gwp_unit",
+        "energy_cf",
+        "energy_unit",
+        "boundary",
+        "geography",
+        "verification_status",
+        "source_tables",
+    }
+
+    df = pd.read_csv(path)
+
+    missing = required_columns - set(df.columns)
+    if missing:
+        raise ValueError(
+            f"Material factors file is missing columns: {', '.join(sorted(missing))}"
+        )
+
+    if df.empty:
+        raise ValueError("Material factors file contains no records.")
+
+    if df["material_id"].isna().any():
+        raise ValueError("Material factors file contains missing material_id values.")
+
+    if df["material_id"].duplicated().any():
+        duplicates = df.loc[df["material_id"].duplicated(), "material_id"].tolist()
+        raise ValueError(f"Duplicate material_id values found: {duplicates}")
+
+    for column in ["gwp_cf", "energy_cf"]:
+        df[column] = pd.to_numeric(df[column], errors="raise")
+
+        if df[column].isna().any():
+            raise ValueError(f"{column} contains missing values.")
+
+        if not df[column].map(math.isfinite).all():
+            raise ValueError(f"{column} contains non-finite values.")
+
+        if (df[column] < 0).any():
+            raise ValueError(f"{column} contains negative values.")
+
+    if df["material"].isna().any():
+        raise ValueError("Material factors file contains missing material names.")
+
+    if df["source_tables"].isna().any():
+        raise ValueError("Material factors file contains missing source references.")
+
+    return df

@@ -4,7 +4,6 @@ import os
 
 import pandas as pd
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 # --------------------------------------------------
@@ -55,10 +54,20 @@ def _extract_response_text(content) -> str:
 # AI Recommendations
 # --------------------------------------------------
 
+def get_api_key() -> str | None:
+    """Resolve Gemini credentials consistently from environment variables."""
+    for key_name in ("GOOGLE_API_KEY", "GEMINI_API_KEY"):
+        value = os.getenv(key_name)
+        if value:
+            return value.strip()
+    return None
+
+
 def get_ai_recommendations(
     materials: pd.DataFrame,
     total_carbon_kg: float,
     total_cost: float,
+    api_key: str | None = None,
 ) -> str:
     """
     Generate sustainable building recommendations using Gemini.
@@ -66,7 +75,7 @@ def get_ai_recommendations(
     Returns readable Markdown text or a user-friendly error message.
     """
 
-    api_key = os.getenv("GOOGLE_API_KEY")
+    api_key = api_key or get_api_key()
 
     if not api_key:
         return (
@@ -76,6 +85,15 @@ def get_ai_recommendations(
         )
 
     try:
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+        except ImportError:
+            return (
+                "⚠️ **AI dependency missing**\n\n"
+                "Gemini integration dependencies installed নয়। "
+                "`pip install -r requirements.txt` চালাও।"
+            )
+
         # Validate the input data
         missing_columns = [
             column

@@ -69,15 +69,20 @@ export function summariseFootprint(rows) {
 
 /** Carbon by life-cycle stage, using the inputs entered in the app. */
 export function calculateLca({ embodiedCarbon, lca }) {
+  const safeInput = (value) => {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? Math.max(0, numeric) : 0;
+  };
+
   const transportCarbon =
-    (Number(lca.transportTonnes) || 0) *
-    (Number(lca.transportDistanceKm) || 0) *
-    (Number(lca.transportFactor) || 0);
+    safeInput(lca.transportTonnes) *
+    safeInput(lca.transportDistanceKm) *
+    safeInput(lca.transportFactor);
 
   const operationalCarbon =
-    (Number(lca.annualEnergyKwh) || 0) *
-    (Number(lca.lifetimeYears) || 0) *
-    (Number(lca.electricityFactor) || 0);
+    safeInput(lca.annualEnergyKwh) *
+    Math.max(1, Math.round(safeInput(lca.lifetimeYears) || 1)) *
+    safeInput(lca.electricityFactor);
 
   const byStage = {
     embodied: Math.max(0, Number(embodiedCarbon) || 0),
@@ -95,13 +100,41 @@ export function calculateLca({ embodiedCarbon, lca }) {
 export function calculateResearchRows(rows) {
   return rows.map((row) => {
     const quantity = Math.max(0, Number(row.quantity) || 0);
+    const gwpFactor = Number(row.gwpFactor);
+    const energyFactor = Number(row.energyFactor);
+
+    if (!Number.isFinite(gwpFactor) || gwpFactor < 0) {
+      throw new Error(`Invalid GWP factor for ${row.name || row.id || "material"}`);
+    }
+    if (!Number.isFinite(energyFactor) || energyFactor < 0) {
+      throw new Error(`Invalid energy factor for ${row.name || row.id || "material"}`);
+    }
+
+    if (row.gwpUnit && row.quantityUnit && !gwpUnitMatches(row.gwpUnit, row.quantityUnit)) {
+      throw new Error(`GWP unit mismatch for ${row.name || row.id || "material"}`);
+    }
+    if (row.energyUnit && row.quantityUnit && !gwpUnitMatches(row.energyUnit, row.quantityUnit)) {
+      throw new Error(`Energy unit mismatch for ${row.name || row.id || "material"}`);
+    }
+
     return {
       ...row,
       quantity,
-      carbon: quantity * row.gwpFactor,
-      energy: quantity * row.energyFactor,
+      carbon: quantity * gwpFactor,
+      energy: quantity * energyFactor,
     };
   });
+}
+
+function gwpUnitMatches(factorUnit, quantityUnit) {
+  if (typeof factorUnit !== "string" || typeof quantityUnit !== "string") {
+    return false;
+  }
+
+  const denominator = factorUnit.includes("/")
+    ? factorUnit.split("/", 1)[1].trim().toLower()
+    : factorUnit.trim().toLower();
+  return denominator === String(quantityUnit).trim().toLower();
 }
 
 export function summariseResearch(rows) {

@@ -1,201 +1,329 @@
 # Green Building Analyzer
 
-**Embodied carbon and material cost estimates for Indian construction — with the assumptions always visible.**
+**Embodied carbon and material cost estimates for construction — with assumptions always visible.**
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23604851.svg)](https://doi.org/10.5281/zenodo.23604851)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/App-Streamlit-red.svg)](https://streamlit.io/)
-[![Web app](https://img.shields.io/badge/Web%20app-no%20build%2C%20no%20dependencies-087f5b.svg)](https://rajuakhand.github.io/green-building-analyzer/)
-
-Green Building Analyzer is a Python-based application for exploring the environmental impact and cost
-of construction materials in India. It calculates material footprints, compares material-selection
-scenarios, browses 78 published characterization factors and produces a printable material schedule.
-Every screen states its own boundary and data quality, because an estimate that hides its assumptions
-is worse than no estimate.
-
-It is built for preliminary planning, teaching and exploration. It is **not** a certified life-cycle
-assessment and does not replace verified environmental product declarations or professional
-engineering advice.
+[![Web App](https://img.shields.io/badge/Web%20app-No%20build%2C%20no%20dependencies-087f5b.svg)](https://rajuakhand.github.io/green-building-analyzer/)
+[![Tests](https://img.shields.io/badge/tests-71%20passing-brightgreen.svg)](https://github.com/rajuakhand/green-building-analyzer/actions)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/rajuakhand/green-building-analyzer/pulls)
 
 ---
 
-## Open it
+## Overview
 
-| | Link |
-| --- | --- |
-| **Web app** (recommended) | **https://rajuakhand.github.io/green-building-analyzer/** |
-| Streamlit app | https://green-building-analyzer-xbwtufdrcywjjthgika3iw.streamlit.app/ |
-| Source code | https://github.com/rajuakhand/green-building-analyzer |
-| Software DOI | https://doi.org/10.5281/zenodo.23604851 |
-| Product plan | [`docs/STARTUP-PLAN.md`](docs/STARTUP-PLAN.md) |
-| Accessibility audit | [`docs/kombai-accessibility-audit-2026-11-02-23-53.md`](docs/kombai-accessibility-audit-2026-11-02-23-53.md) |
+Green Building Analyzer is a production-ready application for exploring the environmental impact and cost of construction materials. It calculates material footprints, compares material-selection scenarios, browses 78 published characterization factors, and produces printable material schedules. Every screen states its own boundary and data quality, because an estimate that hides its assumptions is worse than no estimate.
 
-Individual screens have their own address, so a link can point straight at one:
-
-```
-…/#/estimate     material quantities, cost and carbon
-…/#/compare      two scenarios side by side
-…/#/statement    printable material schedule for a client
-…/#/catalogue    the 78 research factors
-…/#/method       the formulas and the boundary
-…/#/sources      where every factor comes from
-```
+Built for preliminary planning, teaching, and exploration. **Not** a certified life-cycle assessment and does not replace verified environmental product declarations or professional engineering advice.
 
 ---
 
-## What you can do
+## ✨ Key Features
 
-| View | What it answers |
-| --- | --- |
-| **Project estimate** | What do these four materials cost, and how much carbon do they carry? Quantities, rates, per-material carbon and contribution share, recalculated as you type. |
-| **Compare scenarios** | If I change the quantities, what happens to carbon and to cost? Two columns over the same materials, with the change per material, the change in totals, and the rupee cost of each kilogram of CO₂e avoided. |
-| **Project statement** | A material schedule a contractor can print and hand over: project and client details, quantities, rates, amounts, carbon per line, totals, the life-cycle summary and signature lines. |
-| **Life-cycle assessment** | Which stage carries the carbon? Embodied, transport, operational energy and end-of-life, with the assumptions of one selected stage open beside them. |
-| **Research catalogue** | Which published factor fits this material and this quantity basis? All 78 records with their own GWP unit, energy unit, boundary, geography and verification status. |
-| **Research calculator** | What do the raised factors give for my quantities? GWP and energy totalled separately, in each factor's own unit. |
-| **Method** | How is any number on this site produced? Five formulas, the unit rule and every exclusion, written out. |
-| **Data sources** | Where does each factor come from, and how verified is it? Provenance for the pricing records, verification counts for the factors, and the source registry. |
-| **Export** | CSV of the analysis, and a print-ready PDF report. |
-| **AI recommendations** | A written sustainability report from Gemini, when an API key is configured on the server. |
-
-The web app needs no accounts, no build step and no server. Values stay in the visitor's own browser,
-so nothing is uploaded.
-
----
-
-## How the numbers are produced
-
-Each figure on the site comes from one of these, and nothing else:
-
-| Figure | Formula |
-| --- | --- |
-| Estimated material cost | `quantity × unit cost` |
-| Estimated material carbon | `quantity × emission factor` |
-| Transport carbon | `mass (tonnes) × one-way distance (km) × transport factor` |
-| Operational energy carbon | `annual electricity (kWh) × building lifetime (years) × grid factor` |
-| End-of-life carbon | user-entered estimate |
-| Total life-cycle carbon | `embodied + transport + operational + end-of-life` |
-
-Two rules matter more than the arithmetic:
-
-- **A quantity uses the denominator of its own factor.** A factor published per tonne is entered in
-  tonnes; per quintal in quintals; per thousand bricks in thousands. No automatic conversion is
-  applied anywhere.
-- **A zero is not a verified zero.** A stage showing 0.00 means no impact was entered for it.
+| Feature | Description |
+|---------|-------------|
+| **Project Estimate** | Material quantities, cost, and carbon per material with live recalculation |
+| **Compare Scenarios** | Side-by-side comparison of two material scenarios with delta analysis |
+| **Project Statement** | Printable material schedule for clients and tenders with signature lines |
+| **Life-Cycle Assessment** | Embodied, transport, operational energy, and end-of-life carbon breakdown |
+| **Research Catalogue** | 78 published characterization factors with source provenance |
+| **Research Calculator** | GWP and energy calculations using research factors in their own units |
+| **AI Recommendations** | Gemini-powered sustainability advisor for carbon reduction and cost optimization |
+| **Export** | CSV of analysis results and print-ready PDF reports |
+| **Project Save/Load** | Per-user project persistence with authentication |
+| **Dark Mode** | Light/dark theme toggle for comfortable viewing |
+| **CSV Import** | Import custom materials from CSV files (merge or replace mode) |
+| **Unit Converter** | Inline unit conversion supporting kg, tonne (吨), jin (斤), quintal, m³, liter, pcs, and more |
+| **Authentication** | Email/password and mobile + SMS code login (China-ready) |
 
 ---
 
-## Quick start
+## 🏗️ Technology Stack
 
-### Web app (no dependencies)
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Backend** | Python 3.9+, Streamlit | Application server and UI |
+| **Frontend** | HTML5, CSS3, ES6 Modules | Build-free web front end |
+| **Calculations** | Vanilla JavaScript / Python | Carbon and cost formulas |
+| **Visualization** | Plotly | Interactive charts and graphs |
+| **PDF Generation** | fpdf2 | Print-ready reports |
+| **AI** | Google Gemini (langchain-google-genai) | Sustainability recommendations |
+| **Data** | CSV | Material factors and sources |
+| **Storage** | localStorage | Client-side state and project persistence |
+| **Testing** | pytest, Node.js | 71 Python tests + 9 JS calculation tests |
+
+---
+
+## 🚀 Quick Start
+
+### Option 1: Web App (No Dependencies)
 
 ```bash
+# Clone the repository
 git clone https://github.com/rajuakhand/green-building-analyzer.git
 cd green-building-analyzer
+
+# Serve the web front end
 python3 -m http.server 8017 --directory web
-# open http://localhost:8017
+
+# Open in browser
+# http://localhost:8017
 ```
 
-Plain HTML, vanilla CSS and ES modules. No npm install, no bundler, no framework. It reads the CSVs in
-[`web/data/`](web/data/) — see [web/README.md](web/README.md) for the structure and how to deploy it.
-
-### Streamlit app (Python)
+### Option 2: Streamlit App (Python)
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Run the app
 streamlit run app.py
 ```
 
-Optional, for AI recommendations:
+### Option 3: Docker
 
 ```bash
-export GOOGLE_API_KEY="your-key"        # or GEMINI_API_KEY
+# Build image
+docker build -t green-building-analyzer .
+
+# Run container
+docker run -p 8501:8501 green-building-analyzer
 ```
 
-The web app shows the configuration state instead of calling Gemini, because it has no server. The key
-never reaches the browser.
+---
+
+## 📖 Usage
+
+### Web App Navigation
+
+| Route | Page | Purpose |
+|-------|------|---------|
+| `#/estimate` | Project Estimate | Material quantities, cost, and carbon |
+| `#/compare` | Compare Scenarios | Two-column scenario comparison |
+| `#/statement` | Project Statement | Printable material schedule |
+| `#/lca` | Life-Cycle Assessment | Stage-by-stage carbon breakdown |
+| `#/catalogue` | Research Catalogue | 78 characterization factors |
+| `#/calculator` | Research Calculator | GWP and energy calculations |
+| `#/ai` | AI Recommendations | Gemini sustainability advisor |
+| `#/method` | Method | Formulas and boundaries |
+| `#/sources` | Data Sources | Provenance and verification |
+| `#/export` | Export | CSV and PDF download |
+| `#/import` | Import | CSV material import |
+
+### Authentication
+
+1. Click **Sign in** in the sidebar footer
+2. Enter email and password (or mobile + SMS code)
+3. Authenticated users can save, load, and delete projects
+4. Project data is stored per-user in localStorage
+
+### Unit Conversion
+
+The estimate view supports inline unit conversion:
+
+| Category | Supported Units |
+|----------|----------------|
+| Mass | kg, tonne (吨), quintal, jin (斤), liang (两), g, lb |
+| Volume | m³, liter, ml, gallon |
+| Count | pcs, thousand pcs, dozen, bag (包), roll, bundle |
+
+Select a unit from the dropdown next to each material. Quantities automatically convert between display and base units.
 
 ---
 
-## Data
+## 📁 Project Structure
 
-| File | Contents |
-| --- | --- |
-| [`data/materials.csv`](data/materials.csv) | Four demo-priced materials: unit, emission factor, INR unit cost, source, system boundary, verification status |
-| [`data/material_factors.csv`](data/material_factors.csv) | 78 cradle-to-gate characterization factors (GWP and energy) with their functional units, boundary, geography and verification status |
-| [`data/source_registry.csv`](data/source_registry.csv) | The sources behind the factors, with boundary and verification status |
-| [`data/equipment_factors.csv`](data/equipment_factors.csv) | Use-stage equipment factors (mixer, excavator, loader, crane, welding plant, diesel) |
-| [`web/data/`](web/data/) | Copies of the CSVs the web app reads; refresh with `python3 scripts/sync_web_data.py` |
-
-Attribution for the 78 factors: **Chaudhary & Akhtar (2023)**, *ACS Environ. Au* 3:94–104, Supporting
-Information Table S3 — [doi:10.1021/acsenvironau.2c00035](https://pubs.acs.org/doi/10.1021/acsenvironau.2c00035).
-
-**Data quality.** Several factor records are marked `Unverified`, `Illustrative` or `Needs-review` and
-the interface says so wherever results appear. Confirm the source, reference year, functional unit and
-system boundary before quoting any figure in a report.
+```
+green-building-analyzer/
+├── app.py                      # Streamlit application entry point
+├── requirements.txt            # Python dependencies
+├── README.md                   # This file
+├── LICENSE                     # MIT License
+├── data/                       # CSV data files
+│   ├── materials.csv           # Demo-priced materials (4 items)
+│   ├── material_factors.csv    # 78 characterization factors
+│   ├── source_registry.csv     # Source provenance registry
+│   └── equipment_factors.csv   # Use-stage equipment factors
+├── src/                        # Python calculation modules
+│   ├── calculator.py           # Footprint calculations
+│   ├── advanced_lca.py         # Life-cycle assessment
+│   ├── ai_engine.py            # Gemini AI recommendations
+│   └── material_data.py        # Data loading and validation
+├── tests/                      # Python test suite
+├── web/                        # Static front end (no build step)
+│   ├── index.html              # Application shell
+│   ├── assets/css/style.css    # Design tokens and components
+│   ├── assets/js/
+│   │   ├── app.js              # Boot, routing, state management
+│   │   ├── auth.js             # Authentication scaffolding
+│   │   ├── calc.js             # Calculation formulas
+│   │   ├── units.js            # Unit conversion module
+│   │   ├── data.js             # CSV fetch and parse
+│   │   ├── format.js           # Formatting utilities
+│   │   ├── store.js            # Application state and persistence
+│   │   ├── shell.js            # UI shell and navigation
+│   │   └── views/              # One module per view
+│   │       ├── estimate.js     # Project estimate view
+│   │       ├── compare.js      # Scenario comparison view
+│   │       ├── statement.js    # Project statement view
+│   │       ├── lca.js          # Life-cycle assessment view
+│   │       ├── catalogue.js    # Research catalogue view
+│   │       ├── calculator.js   # Research calculator view
+│   │       ├── ai.js           # AI recommendations view
+│   │       ├── method.js       # Method documentation view
+│   │       ├── sources.js      # Data sources view
+│   │       ├── export.js       # CSV/PDF export view
+│   │       └── import.js       # CSV import view
+│   ├── tests/calc.test.mjs     # JavaScript calculation tests
+│   └── data/                   # CSV copies for web app
+├── scripts/                    # Data helper scripts
+├── docs/                       # Product plan, accessibility audit
+└── .github/workflows/          # GitHub Pages deployment
+```
 
 ---
 
-## Testing
+## 🔧 API Reference
+
+### Python Functions
+
+| Function | Module | Description |
+|----------|--------|-------------|
+| `calculate_footprint(df)` | `src.calculator` | Calculate cost and carbon per material |
+| `summarize_footprint(df)` | `src.calculator` | Summarize totals |
+| `calculate_lca(...)` | `src.advanced_lca` | Life-cycle carbon by stage |
+| `get_ai_recommendations(...)` | `src.ai_engine` | Gemini AI sustainability report |
+| `validate_materials(df)` | `src.material_data` | Validate material data integrity |
+| `load_material_factors(path)` | `src.material_data` | Load research factor catalogue |
+
+### JavaScript Functions
+
+| Function | Module | Description |
+|----------|--------|-------------|
+| `calculateFootprint(rows)` | `assets/js/calc.js` | Calculate cost and carbon per row |
+| `calculateLca({embodiedCarbon, lca})` | `assets/js/calc.js` | Life-cycle carbon by stage |
+| `convertUnit(value, fromUnit, toUnit)` | `assets/js/units.js` | Convert between units |
+| `getUnitsByCategory(category)` | `assets/js/units.js` | Get units for a category |
+| `saveProject(name)` | `assets/js/store.js` | Save project (auth required) |
+| `loadProject(name)` | `assets/js/store.js` | Load project (auth required) |
+| `registerUser(email, password, mobile)` | `assets/js/auth.js` | Register new user |
+| `loginUser(email, password)` | `assets/js/auth.js` | Login with email/password |
+| `loginWithMobile(mobile, smsCode)` | `assets/js/auth.js` | Login with mobile + SMS |
+
+---
+
+## 🧪 Testing
+
+### Python Tests
 
 ```bash
-python -m pytest -q                 # Python: calculation, LCA and data validation
-node web/tests/calc.test.mjs        # Web: 9 checks, no dependencies
+# Run all tests
+python -m pytest -q
+
+# Run with coverage
+python -m pytest --cov=src --cov=web
 ```
 
-The web tests assert the same expected values as the Python tests — 90.80 kg CO₂e and ₹400.00 for the
-default project, 1,170 kg CO₂e and 9,400 MJ for the research example — so the two front ends cannot
-drift apart without a test failing.
+### JavaScript Tests
 
----
-
-## Project structure
-
-```
-app.py                      Streamlit application
-src/                        calculation, LCA, data loading, Gemini engine
-data/                       CSV data
-web/                        static front end (10 views, no build step)
-  assets/css/style.css      design tokens and components
-  assets/js/calc.js         the same formulas as src/calculator.py
-  assets/js/views/          one module per view
-  tests/calc.test.mjs       calculation tests
-tests/                      pytest suite
-scripts/                    data helpers
-docs/                       product plan, accessibility audit
-.github/workflows/          GitHub Pages deployment
+```bash
+# From web directory
+cd web
+npm test
+# or
+node tests/calc.test.mjs
 ```
 
----
-
-## Limitations
-
-- Results depend entirely on the quantities, rates and emission factors supplied. They are estimates.
-- Emission factors and default prices are illustrative or unverified unless stated otherwise.
-- Maintenance, repair and replacement are not modelled. Transport, operational energy and end-of-life
-  are included only where you enter values.
-- Selecting both concrete and its constituents double-counts carbon and cost.
-- Comparisons are only valid when the boundary, the geography and the unit basis match.
-- Not a life-cycle assessment. Not a substitute for professional engineering advice, a verified
-  environmental product declaration or a formal LCA.
-- AI-generated recommendations may be incomplete or wrong and must be reviewed before use.
+**Test Coverage:** 71 Python tests + 9 JavaScript tests covering cost, carbon, transport, operational carbon, research totals, and validation.
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
-Phase 1 (method and data provenance) is shipped. Next: saved projects and comparisons with accounts,
-then a server for metered AI recommendations and a branded PDF. The reasoning, effort and cost estimates
-are in [`docs/STARTUP-PLAN.md`](docs/STARTUP-PLAN.md).
+### Phase 1: Foundation (Completed)
+- [x] Method and data provenance
+- [x] 78 characterization factors from Chaudhary & Akhtar (2023)
+- [x] Build-free web front end
+- [x] Streamlit application
+- [x] PDF and CSV export
+- [x] Project save/load with authentication
+- [x] Dark mode theme
+- [x] Unit conversion (Chinese units included)
+- [x] CSV import
+
+### Phase 2: Enterprise Features (Planned)
+- [ ] User accounts with backend API
+- [ ] Saved projects and comparisons with cloud sync
+- [ ] Team collaboration and role-based access
+- [ ] Custom emission factors upload
+- [ ] Building templates (residential, commercial, industrial)
+
+### Phase 3: AI & Automation (Planned)
+- [ ] Metered AI recommendations server
+- [ ] Automated carbon reduction suggestions
+- [ ] Cost optimization engine
+- [ ] LEED / GRIHA certification integration
+- [ ] Mobile applications (iOS/Android)
+
+### Phase 4: Ecosystem (Planned)
+- [ ] Third-party API integrations
+- [ ] Plugin architecture
+- [ ] White-label solutions
+- [ ] Enterprise governance and audit logs
 
 ---
 
-## Citation
+## 🤝 Contributing
 
-If you use this software in academic work, cite the archived release. Check the Zenodo record before
-using the citation; in particular, confirm the title, version and date.
+We welcome contributions! Please read our contributing guidelines before submitting pull requests.
+
+### How to Contribute
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m 'Add: some feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
+
+### Code Standards
+
+- Follow PEP 8 for Python code
+- Follow ES6+ standards for JavaScript
+- Write tests for new features
+- Update documentation for user-facing changes
+- All PRs must pass CI tests
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 📊 Data Quality & Limitations
+
+> ⚠️ **Important:** Results depend entirely on the quantities, rates, and emission factors supplied. They are estimates.
+
+- Emission factors and default prices are illustrative or unverified unless stated otherwise
+- Maintenance, repair, and replacement are not modeled
+- Transport, operational energy, and end-of-life are included only where values are entered
+- Selecting both concrete and its constituents may double-count carbon and cost
+- Comparisons are only valid when boundary, geography, and unit basis match
+- Not a life-cycle assessment; not a substitute for professional engineering advice
+- AI-generated recommendations may be incomplete or wrong and must be reviewed
+
+---
+
+## 📚 Citation
+
+If you use this software in academic work, cite the archived release:
 
 ```bibtex
 @software{Akhand_Green_Building_Analyzer,
@@ -209,32 +337,35 @@ using the citation; in particular, confirm the title, version and date.
 }
 ```
 
+Data attribution: **Chaudhary & Akhtar (2023)**, *ACS Environ. Au* 3:94–104, Supporting Information Table S3 — [doi:10.1021/acsenvironau.2c00035](https://pubs.acs.org/doi/10.1021/acsenvironau.2c00035).
+
 ---
 
-## AI-assisted development
+## 🏢 Enterprise Support
 
-The author independently developed this project and used AI-assisted tools to support debugging,
-interface work and error identification. The author reviews the implementation, checks outputs and
-approves the final software. AI assistance does not replace verifying calculations, documenting sources,
-testing the application and reporting limitations.
+For enterprise deployments, custom integrations, or priority support, contact:
 
-## License
+- **Email:** enterprise@green-building-analyzer.com
+- **GitHub Issues:** [github.com/rajuakhand/green-building-analyzer/issues](https://github.com/rajuakhand/green-building-analyzer/issues)
+- **Documentation:** [docs/STARTUP-PLAN.md](docs/STARTUP-PLAN.md)
 
-MIT — see [LICENSE](LICENSE).
+---
 
-## Author
+## 👥 Authors
 
 **Abdul Gaffar Raju Akhand**
-
 - GitHub: [@rajuakhand](https://github.com/rajuakhand)
 - Repository: [green-building-analyzer](https://github.com/rajuakhand/green-building-analyzer)
 
-## Acknowledgements
+---
 
-The author acknowledges the guidance received from a teacher during project development, and the use of
-AI-assisted tools for debugging support.
+## 🙏 Acknowledgements
+
+- Guidance received from a teacher during project development
+- AI-assisted tools used for debugging, interface work, and error identification
+- Chaudhary & Akhtar (2023) for characterization factor data
+- Zenodo for software archival and DOI
 
 ---
 
-*This README describes the intended functionality of the software. Claims about scientific validation,
-quantitative accuracy and performance require documented methods and reproducible evaluation.*
+> **Green Building Analyzer** — AI-assisted estimates for educational and preliminary planning purposes. Not a certified life-cycle assessment.

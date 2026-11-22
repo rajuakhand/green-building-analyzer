@@ -13,7 +13,12 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 WEB_DATA_DIR = ROOT / "web" / "data"
 
-FILES = ("materials.csv", "material_factors.csv")
+FILES = (
+    "materials.csv",
+    "material_factors.csv",
+    "source_registry.csv",
+    "equipment_factors.csv",
+)
 
 
 def main() -> int:

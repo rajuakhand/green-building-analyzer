@@ -5,3 +5,23 @@ backgroundColor = "#F8FAF8"
 secondaryBackgroundColor = "#EEF3EF"
 textColor = "#172B24"
 font = "sans serif"
+borderColor = "#DDE6DF"
+showWidgetBorder = true
+baseRadius = "medium"
+buttonRadius = "medium"
+paddingTop = "1.5rem"
+paddingBottom = "2.5rem"
+
+[theme.light]
+primaryColor = "#087F5B"
+backgroundColor = "#F8FAF8"
+secondaryBackgroundColor = "#EEF3EF"
+textColor = "#172B24"
+greenTextColor = "#087F5B"
+
+[theme.dark]
+primaryColor = "#34D399"
+backgroundColor = "#0B1712"
+secondaryBackgroundColor = "#13251D"
+textColor = "#ECFDF5"
+borderColor = "#294338"

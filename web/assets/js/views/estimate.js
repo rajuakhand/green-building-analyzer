@@ -1,13 +1,14 @@
 import { buildAnalysisCsv, downloadFile } from "../csv.js";
 import { CO2E, escapeHtml, formatFactor, formatNumber, percentOf } from "../format.js";
 import { footerNote, inputValue, pageHead } from "../shell.js";
+import { convertUnit, getUnitsByCategory, getBaseUnit, isValidUnit, getUnitLabel } from "../units.js";
 
 /**
  * Project estimate: material quantities and rates on the left, their
  * calculated cost, carbon and contribution on the right.
  */
 export function render(root, ctx) {
-  const { materials, derived } = ctx;
+  const { materials, state, derived } = ctx;
   const { rows, summary } = derived;
 
   root.innerHTML = `
@@ -43,7 +44,16 @@ export function render(root, ctx) {
             .map((row, index) => {
               const qtyId = `qty-${index}`;
               const costId = `cost-${index}`;
-              const unit = escapeHtml(row.unit);
+              const unitId = `unit-${index}`;
+              const baseUnit = row.unit;
+              const currentUnit = state.materialUnits[row.name] || baseUnit;
+              const availableUnits = getUnitsByCategory(getBaseUnit(baseUnit) || "mass")
+                .filter(u => u !== baseUnit)
+                .slice(0, 5)
+                .map(u => `<option value="${u}">${getUnitLabel(u)}</option>`)
+                .join("");
+              const unitLabel = getUnitLabel(currentUnit);
+              const baseLabel = getUnitLabel(baseUnit);
               return `
               <div class="material-group">
                 <div class="material-group__head">
@@ -56,20 +66,29 @@ export function render(root, ctx) {
                 </div>
                 <div class="field-row">
                   <label class="field" for="${qtyId}">
-                    <span class="field__label">Quantity (${unit})</span>
+                    <span class="field__label">Quantity (${unitLabel})</span>
                     <input class="input" id="${qtyId}" type="text" inputmode="decimal"
                       autocomplete="off" data-bind="material-qty" data-material="${escapeHtml(row.name)}"
                       value="${inputValue(ctx, qtyId, row.quantity)}">
                   </label>
+                  <label class="field" for="${unitId}">
+                    <span class="field__label">Unit</span>
+                    <select class="input" id="${unitId}" data-bind="material-unit" data-material="${escapeHtml(row.name)}">
+                      <option value="${currentUnit}" ${currentUnit === baseUnit ? "selected" : ""}>${unitLabel}</option>
+                      <option value="${baseUnit}">${baseLabel} (base)</option>
+                      ${availableUnits}
+                    </select>
+                  </label>
                   <label class="field" for="${costId}">
-                    <span class="field__label">Cost per ${unit} (INR)</span>
+                    <span class="field__label">Cost per ${unitLabel} (INR)</span>
                     <input class="input" id="${costId}" type="text" inputmode="decimal"
                       autocomplete="off" data-bind="material-cost" data-material="${escapeHtml(row.name)}"
                       value="${inputValue(ctx, costId, row.unitCost)}">
                   </label>
                 </div>
                 <p class="material-group__ef">
-                  Emission factor ${formatFactor(row.emissionFactor)} kg ${CO2E}/${unit}
+                  Emission factor ${formatFactor(row.emissionFactor)} kg ${CO2E}/${baseLabel}
+                  ${currentUnit !== baseUnit ? ` | 1 ${unitLabel} ≈ ${convertUnit(1, currentUnit, baseUnit)?.toFixed(4) || "?"} ${baseLabel}` : ""}
                 </p>
               </div>`;
             })
@@ -156,7 +175,96 @@ export function render(root, ctx) {
       actionLabel: "Detailed results",
       actionRoute: "export",
     })}
+
+    <div class="panel">
+      <div class="panel__head">
+        <h3 class="t-panel">Unit Converter</h3>
+        <span class="panel__meta">Convert between construction units</span>
+      </div>
+      <div class="panel__body" style="padding: 20px;">
+        <div class="field-row">
+          <div style="flex: 1;">
+            <label class="field__label">Value</label>
+            <input class="input" type="text" id="convert-value" inputmode="decimal" placeholder="0" value="1">
+          </div>
+          <div style="flex: 1; min-width: 120px;">
+            <label class="field__label">From</label>
+            <select class="input" id="convert-from">
+              <option value="kg">kg</option>
+              <option value="tonne">ton (吨)</option>
+              <option value="jin">jin (斤)</option>
+              <option value="quintal">quintal</option>
+              <option value="g">g</option>
+              <option value="lb">lb</option>
+              <option value="m3">m³</option>
+              <option value="liter">liter</option>
+              <option value="pcs">pcs</option>
+              <option value="thousand pcs">1000 pcs</option>
+              <option value="dozen">dozen</option>
+              <option value="bag">bag (包)</option>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 120px;">
+            <label class="field__label">To</label>
+            <select class="input" id="convert-to">
+              <option value="kg">kg</option>
+              <option value="tonne">ton (吨)</option>
+              <option value="jin">jin (斤)</option>
+              <option value="quintal">quintal</option>
+              <option value="g">g</option>
+              <option value="lb">lb</option>
+              <option value="m3">m³</option>
+              <option value="liter">liter</option>
+              <option value="pcs">pcs</option>
+              <option value="thousand pcs">1000 pcs</option>
+              <option value="dozen">dozen</option>
+              <option value="bag">bag (包)</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top: 16px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-md); border: 1px solid var(--border);">
+          <p class="t-panel" style="margin-bottom: 4px;">Result</p>
+          <p style="font-size: 24px; font-weight: 600; color: var(--ink);" id="convert-result">—</p>
+          <p style="font-size: var(--text-xs); color: var(--muted); margin-top: 4px;" id="convert-formula"></p>
+        </div>
+      </div>
+    </div>
   `;
+
+  const convertValue = document.getElementById("convert-value");
+  const convertFrom = document.getElementById("convert-from");
+  const convertTo = document.getElementById("convert-to");
+  const convertResult = document.getElementById("convert-result");
+  const convertFormula = document.getElementById("convert-formula");
+
+  function updateConversion() {
+    const value = parseFloat(convertValue.value);
+    const from = convertFrom.value;
+    const to = convertTo.value;
+
+    if (isNaN(value)) {
+      convertResult.textContent = "—";
+      convertFormula.textContent = "";
+      return;
+    }
+
+    const result = convertUnit(value, from, to);
+    if (result === null) {
+      convertResult.textContent = "Incompatible units";
+      convertFormula.textContent = "";
+      return;
+    }
+
+    convertResult.textContent = formatNumber(result, 4);
+    const fromLabel = getUnitLabel(from);
+    const toLabel = getUnitLabel(to);
+    convertFormula.textContent = `${formatNumber(value, 4)} ${fromLabel} = ${formatNumber(result, 4)} ${toLabel}`;
+  }
+
+  convertValue.addEventListener("input", updateConversion);
+  convertFrom.addEventListener("change", updateConversion);
+  convertTo.addEventListener("change", updateConversion);
+  updateConversion();
 }
 
 /**
